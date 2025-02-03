@@ -4,9 +4,7 @@ A Repository for learning Pixi React
 
 ## Demo
 
-🚧 Under Construction 🚧
-
-<!-- [Live Demo](https://seanjiangsh.github.io/pixi.js-tutorials) -->
+[Live Demo](https://seanjiangsh.github.io/pixi-react-tutorials)
 
 ## Getting Started
 

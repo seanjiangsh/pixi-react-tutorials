@@ -1,38 +1,21 @@
-import React from "react";
-import { Suspense, lazy, useState } from "react";
+import { useState } from "react";
 import "./App.css";
 
-const ThemeLoader = {
-  HelloWorld: () => import("./hello-world/HelloWorld"),
-  // Add more scenes here
-};
+import { ThemeName } from "./scenes/sceneLoader";
+import Header from "./components/Header";
+import Scene from "./components/Scene";
 
 export default function App() {
-  const [scene, setScene] = useState<JSX.Element | null>(null);
-  const [activeTheme, setActiveTheme] = useState<string | null>(null);
+  const [activeTheme, setActiveTheme] = useState<ThemeName | null>(null);
 
-  const loadScene = (sceneName: keyof typeof ThemeLoader) => {
+  const loadScene = (sceneName: ThemeName) => {
     setActiveTheme(sceneName);
-    setScene(
-      <Suspense fallback={<div>Loading...</div>}>
-        {React.createElement(lazy(ThemeLoader[sceneName]))}
-      </Suspense>
-    );
   };
 
   return (
-    <div>
-      <h1>Pixi React Tutorials</h1>
-      <div className="button-list">
-        <button
-          onClick={() => loadScene("HelloWorld")}
-          className={activeTheme === "HelloWorld" ? "active" : ""}
-        >
-          Hello World
-        </button>
-        {/* Add more buttons for other scenes here */}
-      </div>
-      {scene}
-    </div>
+    <>
+      <Header activeTheme={activeTheme} loadScene={loadScene} />
+      {activeTheme && <Scene sceneName={activeTheme} />}
+    </>
   );
 }
