@@ -12,7 +12,7 @@ export default function Scene({ sceneName }: SceneProps) {
 
   return (
     <div className="scene">
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div className="loading">Loading...</div>}>
         <LazyComponent />
       </Suspense>
     </div>

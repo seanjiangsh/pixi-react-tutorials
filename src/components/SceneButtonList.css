@@ -1,7 +1,8 @@
 .button-list {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.5rem;
+  overflow-x: auto;
 }
 
 button {
@@ -22,4 +23,8 @@ button.active {
 button:disabled {
   cursor: default;
   opacity: 0.6;
+}
+
+button:last-child {
+  margin-right: 0.5rem;
 }

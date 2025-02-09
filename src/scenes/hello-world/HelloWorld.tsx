@@ -1,14 +1,18 @@
-import { useMemo } from "react";
-import { BlurFilter, TextStyle } from "pixi.js";
-import { Stage, Container, Sprite, Text } from "@pixi/react";
+import { Stage, Container, Sprite } from "@pixi/react";
 
 import useSceneSize from "../../utils/useSceneSize";
+import BluredText from "./BluredText";
 
 export default function HelloWorld() {
-  const blurFilter = useMemo(() => new BlurFilter(2), []);
   const bunnyUrl = "https://pixijs.io/pixi-react/img/bunny.png";
 
   const { width, height } = useSceneSize();
+  const bluredTextProps = {
+    text: "Hello World",
+    x: width * 0.275,
+    y: height * 0.25,
+    fontSize: Math.sqrt(width * width + height * height) * 0.03,
+  };
 
   return (
     <Stage width={width} height={height} options={{ background: 0x1099bb }}>
@@ -17,25 +21,7 @@ export default function HelloWorld() {
       <Sprite image={bunnyUrl} anchor={0.5} x={width * 0.7} y={height * 0.4} />
 
       <Container x={width * 0.25} y={height * 0.33}>
-        <Text
-          text="Hello World"
-          anchor={0.5}
-          x={width * 0.275}
-          y={height * 0.25}
-          filters={[blurFilter]}
-          style={
-            new TextStyle({
-              align: "center",
-              fill: "0xffffff",
-              // use Math.sqrt to scale the font size based on the diagonal size
-              fontSize: Math.sqrt(width * width + height * height) * 0.03,
-              letterSpacing: 10,
-              dropShadow: true,
-              dropShadowColor: "#E72264",
-              dropShadowDistance: 6,
-            })
-          }
-        />
+        <BluredText {...bluredTextProps} />
       </Container>
     </Stage>
   );
