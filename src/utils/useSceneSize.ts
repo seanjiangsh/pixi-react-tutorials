@@ -1,18 +1,17 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useViewportSize, Size } from "./useViewport";
 
 export default function useSceneSize() {
   const viewportSize = useViewportSize();
-  const [sceneHeight, setSceneHeight] = useState(0);
 
-  useEffect(() => {
+  const sceneHeight = useMemo(() => {
     const rootStyles = getComputedStyle(document.documentElement);
     const headerHeightRem = rootStyles.getPropertyValue("--header-height");
     const rootFontSize = parseFloat(rootStyles.fontSize);
     const headerHeightPx = parseFloat(headerHeightRem) * rootFontSize;
 
-    setSceneHeight(viewportSize.height - headerHeightPx);
-  }, [viewportSize]);
+    return viewportSize.height - headerHeightPx;
+  }, [viewportSize.height]);
 
   const { width } = viewportSize;
   const height = sceneHeight;

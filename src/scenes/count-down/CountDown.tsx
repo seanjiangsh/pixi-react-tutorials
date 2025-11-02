@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
-import { Stage, Container, Text } from "@pixi/react";
-import { TextStyle } from "pixi.js";
+import { Application, extend } from "@pixi/react";
+import { Container, Text, TextStyle } from "pixi.js";
+
+import { SceneProps } from "../sceneLoader";
+
+// extend tells @pixi/react what Pixi.js components are available
+extend({ Container, Text });
 
 // We could turn these into props for production use
 const width = 200;
@@ -15,11 +20,17 @@ const textStyle = new TextStyle({
   fontSize: height * 0.8,
 });
 
-export default function CountDown() {
+export default function CountDown({ containerRef }: SceneProps) {
   // const { width, height } = useSceneSize();
   const [count, setCount] = useState(11);
   // step is 0 to 100 for the animation
   const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (containerRef?.current) {
+      console.log("CountDown container ref:", containerRef.current);
+    }
+  }, [containerRef]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -43,7 +54,7 @@ export default function CountDown() {
   const text = count > 0 && (
     <>
       {count - 1 > 0 && (
-        <Text
+        <pixiText
           text={(count - 1).toString()}
           anchor={0.5}
           y={step < moveTrashold ? -height : currentRange - height}
@@ -52,7 +63,7 @@ export default function CountDown() {
       )}
 
       {count <= 10 && (
-        <Text
+        <pixiText
           text={count.toString()}
           anchor={0.5}
           y={step < moveTrashold ? 0 : currentRange}
@@ -63,10 +74,10 @@ export default function CountDown() {
   );
 
   return (
-    <Stage width={width} height={height}>
-      <Container x={width / 2} y={height / 2}>
+    <pixiStage width={width} height={height}>
+      <pixiContainer x={width / 2} y={height / 2}>
         {text}
-      </Container>
-    </Stage>
+      </pixiContainer>
+    </pixiStage>
   );
 }

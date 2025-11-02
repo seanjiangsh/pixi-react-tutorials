@@ -1,6 +1,10 @@
-import { Text } from "@pixi/react";
-import { BlurFilter, TextStyle } from "pixi.js";
+import { Text, BlurFilter, TextStyle } from "pixi.js";
+import { extend } from "@pixi/react";
 import { useMemo } from "react";
+
+extend({
+  Text,
+});
 
 type BluredTextProps = {
   blurStrngth?: number;
@@ -15,7 +19,7 @@ export default function BluredText(props: BluredTextProps) {
   const blurFilter = useMemo(() => new BlurFilter(blurStrngth), [blurStrngth]);
 
   return (
-    <Text
+    <pixiText
       text={text}
       anchor={0.5}
       x={x}
@@ -27,9 +31,10 @@ export default function BluredText(props: BluredTextProps) {
           fill: "0xffffff",
           fontSize,
           letterSpacing: 10,
-          dropShadow: true,
-          dropShadowColor: "#E72264",
-          dropShadowDistance: 6,
+          dropShadow: {
+            color: "#E72264",
+            distance: 6,
+          },
         })
       }
     />

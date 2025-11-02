@@ -1,11 +1,48 @@
-import { Stage, Container, Sprite } from "@pixi/react";
+import { Application, extend } from "@pixi/react";
+import { Assets, Container, Sprite, Texture } from "pixi.js";
 
 import useSceneSize from "../../utils/useSceneSize";
 import BluredText from "./BluredText";
+import { useEffect, useRef, useState } from "react";
+import { SceneProps } from "../sceneLoader";
 
-export default function HelloWorld() {
-  const bunnyUrl = "https://pixijs.io/pixi-react/img/bunny.png";
+// extend tells @pixi/react what Pixi.js components are available
+extend({ Container, Sprite });
 
+function BunnySprite() {
+  // The Pixi.js `Sprite`
+  const spriteRef = useRef(null);
+
+  const [texture, setTexture] = useState(Texture.EMPTY);
+  const [isHovered, setIsHover] = useState(false);
+  const [isActive, setIsActive] = useState(false);
+
+  // Preload the sprite if it hasn't been loaded yet
+  useEffect(() => {
+    if (texture === Texture.EMPTY) {
+      Assets.load("https://pixijs.com/assets/bunny.png").then((result) =>
+        setTexture(result)
+      );
+    }
+  }, [texture]);
+
+  return (
+    <pixiSprite
+      ref={spriteRef}
+      anchor={0.5}
+      eventMode={"static"}
+      onClick={() => setIsActive(!isActive)}
+      onPointerOver={() => setIsHover(true)}
+      onPointerOut={() => setIsHover(false)}
+      scale={isActive ? 1 : 1.5}
+      texture={texture}
+      x={100}
+      y={100}
+    />
+  );
+}
+
+export default function HelloWorld({ containerRef }: SceneProps) {
   const { width, height } = useSceneSize();
   const bluredTextProps = {
     text: "Hello World",
@@ -15,14 +52,16 @@ export default function HelloWorld() {
   };
 
   return (
-    <Stage width={width} height={height} options={{ background: 0x1099bb }}>
-      <Sprite image={bunnyUrl} anchor={0.5} x={width * 0.3} y={height * 0.4} />
-      <Sprite image={bunnyUrl} anchor={0.5} x={width * 0.5} y={height * 0.45} />
-      <Sprite image={bunnyUrl} anchor={0.5} x={width * 0.7} y={height * 0.4} />
-
-      <Container x={width * 0.25} y={height * 0.33}>
+    <Application
+      width={width}
+      height={height}
+      background={0x1099bb}
+      resizeTo={containerRef}
+    >
+      <BunnySprite />
+      <pixiContainer x={width * 0.25} y={height * 0.33}>
         <BluredText {...bluredTextProps} />
-      </Container>
-    </Stage>
+      </pixiContainer>
+    </Application>
   );
 }
