@@ -1,5 +1,11 @@
 import { Application, extend } from "@pixi/react";
-import { Assets, Container, Sprite, Texture } from "pixi.js";
+import {
+  Assets,
+  Container,
+  Sprite,
+  Texture,
+  FederatedPointerEvent,
+} from "pixi.js";
 
 import useSceneSize from "../../utils/useSceneSize";
 import BluredText from "./BluredText";
@@ -14,8 +20,9 @@ function BunnySprite() {
   const spriteRef = useRef(null);
 
   const [texture, setTexture] = useState(Texture.EMPTY);
-  const [isHovered, setIsHover] = useState(false);
   const [isActive, setIsActive] = useState(false);
+  const [position, setPosition] = useState({ x: 100, y: 100 });
+  const [isDragging, setIsDragging] = useState(false);
 
   // Preload the sprite if it hasn't been loaded yet
   useEffect(() => {
@@ -26,18 +33,35 @@ function BunnySprite() {
     }
   }, [texture]);
 
+  const handlePointerMove = (event: FederatedPointerEvent) => {
+    const { x, y } = event.global;
+    if (!isDragging) return;
+    console.log("Moving to:", x, y);
+    setPosition({ x, y });
+  };
+
+  const handlePointerDown = () => {
+    setIsDragging(true);
+  };
+
+  const handlePointerUp = () => {
+    setIsDragging(false);
+  };
+
   return (
     <pixiSprite
       ref={spriteRef}
       anchor={0.5}
       eventMode={"static"}
       onClick={() => setIsActive(!isActive)}
-      onPointerOver={() => setIsHover(true)}
-      onPointerOut={() => setIsHover(false)}
+      onPointerMove={handlePointerMove}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerUpOutside={handlePointerUp}
       scale={isActive ? 1 : 1.5}
       texture={texture}
-      x={100}
-      y={100}
+      x={position.x}
+      y={position.y}
     />
   );
 }
