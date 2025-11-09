@@ -15,8 +15,11 @@ type BluredTextProps = {
 };
 
 export default function BluredText(props: BluredTextProps) {
-  const { blurStrngth = 2, text, x, y, fontSize } = props;
-  const blurFilter = useMemo(() => new BlurFilter(blurStrngth), [blurStrngth]);
+  const { blurStrngth = 1, text, x, y, fontSize } = props;
+  const blurFilter = useMemo(
+    () => new BlurFilter({ strength: blurStrngth }),
+    [blurStrngth]
+  );
 
   return (
     <pixiText

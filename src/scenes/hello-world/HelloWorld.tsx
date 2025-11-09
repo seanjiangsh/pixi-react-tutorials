@@ -5,24 +5,25 @@ import {
   Sprite,
   Texture,
   FederatedPointerEvent,
+  Rectangle,
 } from "pixi.js";
 
 import useSceneSize from "../../utils/useSceneSize";
 import BluredText from "./BluredText";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { SceneProps } from "../sceneLoader";
 
 // extend tells @pixi/react what Pixi.js components are available
 extend({ Container, Sprite });
 
-function BunnySprite() {
-  // The Pixi.js `Sprite`
-  const spriteRef = useRef(null);
+type BunnySpriteProps = {
+  x: number;
+  y: number;
+};
 
+function BunnySprite({ x, y }: BunnySpriteProps) {
   const [texture, setTexture] = useState(Texture.EMPTY);
   const [isActive, setIsActive] = useState(false);
-  const [position, setPosition] = useState({ x: 100, y: 100 });
-  const [isDragging, setIsDragging] = useState(false);
 
   // Preload the sprite if it hasn't been loaded yet
   useEffect(() => {
@@ -33,46 +34,36 @@ function BunnySprite() {
     }
   }, [texture]);
 
-  const handlePointerMove = (event: FederatedPointerEvent) => {
-    const { x, y } = event.global;
-    if (!isDragging) return;
-    console.log("Moving to:", x, y);
-    setPosition({ x, y });
-  };
-
-  const handlePointerDown = () => {
-    setIsDragging(true);
-  };
-
-  const handlePointerUp = () => {
-    setIsDragging(false);
-  };
-
   return (
     <pixiSprite
-      ref={spriteRef}
       anchor={0.5}
       eventMode={"static"}
       onClick={() => setIsActive(!isActive)}
-      onPointerMove={handlePointerMove}
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onPointerUpOutside={handlePointerUp}
       scale={isActive ? 1 : 1.5}
       texture={texture}
-      x={position.x}
-      y={position.y}
+      x={x}
+      y={y}
     />
   );
 }
 
 export default function HelloWorld({ containerRef }: SceneProps) {
   const { width, height } = useSceneSize();
+  const [spritePosition, setSpritePosition] = useState({
+    x: width / 2,
+    y: height / 2,
+  });
+  const containerHitArea = new Rectangle(0, 0, width, height);
   const bluredTextProps = {
     text: "Hello World",
-    x: width * 0.275,
-    y: height * 0.25,
+    x: width * 0.5,
+    y: height * 0.75,
     fontSize: Math.sqrt(width * width + height * height) * 0.03,
+  };
+
+  const handlePointerMove = (e: FederatedPointerEvent) => {
+    const { x, y } = e.global;
+    setSpritePosition({ x, y });
   };
 
   return (
@@ -82,8 +73,12 @@ export default function HelloWorld({ containerRef }: SceneProps) {
       background={0x1099bb}
       resizeTo={containerRef}
     >
-      <BunnySprite />
-      <pixiContainer x={width * 0.25} y={height * 0.33}>
+      <pixiContainer
+        eventMode="static"
+        hitArea={containerHitArea}
+        onPointerMove={handlePointerMove}
+      >
+        <BunnySprite x={spritePosition.x} y={spritePosition.y} />
         <BluredText {...bluredTextProps} />
       </pixiContainer>
     </Application>
