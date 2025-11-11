@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Application, extend } from "@pixi/react";
 import {
   Assets,
@@ -8,10 +9,9 @@ import {
   Rectangle,
 } from "pixi.js";
 
-import useSceneSize from "../../utils/useSceneSize";
-import BluredText from "./BluredText";
-import { useEffect, useState } from "react";
-import { SceneProps } from "../sceneLoader";
+import useSceneSize from "src/utils/useSceneSize";
+import BluredText from "src/scenes/hello-world/BluredText";
+import { SceneProps } from "src/scenes/sceneLoader";
 
 // extend tells @pixi/react what Pixi.js components are available
 extend({ Container, Sprite });

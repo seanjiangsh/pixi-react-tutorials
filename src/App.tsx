@@ -1,9 +1,9 @@
 import { useState } from "react";
-import "./App.css";
+import "src/App.css";
 
-import { ThemeName } from "./scenes/sceneLoader";
-import Header from "./components/Header";
-import Scene from "./components/Scene";
+import { ThemeName } from "src/scenes/sceneLoader";
+import Header from "src/components/Header";
+import Scene from "src/components/Scene";
 
 export default function App() {
   const [activeTheme, setActiveTheme] = useState<ThemeName | null>(null);

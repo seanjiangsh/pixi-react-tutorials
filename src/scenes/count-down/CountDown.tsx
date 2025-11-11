@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Application, extend } from "@pixi/react";
 import { Container, Graphics, Text, TextStyle } from "pixi.js";
 
-import { SceneProps } from "../sceneLoader";
-import useSceneSize from "../../utils/useSceneSize";
+import { SceneProps } from "src/scenes/sceneLoader";
+import useSceneSize from "src/utils/useSceneSize";
 
 extend({ Container, Text, Graphics });
 

@@ -1,7 +1,7 @@
 import { useRef } from "react";
 
-import "./Scene.css";
-import { ThemeLoader, ThemeName } from "../scenes/sceneLoader";
+import "src/components/Scene.css";
+import { ThemeLoader, ThemeName } from "src/scenes/sceneLoader";
 
 type SceneProps = {
   sceneName: ThemeName;

@@ -1,7 +1,7 @@
-import "./Header.css";
-import SceneButtonList from "./SceneButtonList";
+import "src/components/Header.css";
+import SceneButtonList from "src/components/SceneButtonList";
 
-import { type ThemeName } from "../scenes/sceneLoader";
+import { type ThemeName } from "src/scenes/sceneLoader";
 
 type HeaderProps = {
   activeTheme: ThemeName | null;

@@ -1,5 +1,5 @@
-import { ThemeLoader, type ThemeName } from "../scenes/sceneLoader";
-import "./SceneButtonList.css";
+import { ThemeLoader, type ThemeName } from "src/scenes/sceneLoader";
+import "src/components/SceneButtonList.css";
 
 type SceneButtonListProps = {
   activeTheme: ThemeName | null;
