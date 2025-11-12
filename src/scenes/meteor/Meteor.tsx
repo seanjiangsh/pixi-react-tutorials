@@ -3,7 +3,7 @@ import { Container } from "pixi.js";
 
 import useSceneSize from "src/utils/useSceneSize";
 import { SceneProps } from "src/scenes/sceneLoader";
-import { MeteorGraphics } from "src/scenes/meteor/MeteorLayer";
+import { MeteorGraphics } from "src/scenes/meteor/MeteorGraphics";
 
 // extend tells @pixi/react what Pixi.js components are available
 extend({ Container });
@@ -19,8 +19,9 @@ export default function Meteor({ containerRef }: SceneProps) {
       resizeTo={containerRef}
       antialias
     >
-      <pixiContainer x={width - width / 16} y={height / 2}>
-        <MeteorGraphics radius={50} baseBlur={1} layers={10} />
+      {/* <pixiContainer x={width - width / 16} y={height / 2}> */}
+      <pixiContainer x={width / 2} y={height / 2}>
+        <MeteorGraphics width={width / 4} baseBlur={5} layers={5} />
       </pixiContainer>
     </Application>
   );

@@ -40,3 +40,24 @@ export function calculateColor(brightness: number): {
   const color = (red << 16) | (green << 8) | blue;
   return { color, alpha };
 }
+
+type GeneratePointsByEquationParams = {
+  startPoint: { x: number; y: number };
+  equation: (t: number) => { x: number; y: number };
+  length: number;
+  segments: number;
+};
+
+export function generatePointsByEquation(
+  params: GeneratePointsByEquationParams
+): Array<{ x: number; y: number }> {
+  const { startPoint, equation, length, segments } = params;
+  return Array.from({ length: segments + 1 }, (_, i) => {
+    const t = (i / segments) * length;
+    const { x, y } = equation(t);
+    return {
+      x: Math.round(startPoint.x + x),
+      y: Math.round(startPoint.y + y),
+    };
+  });
+}
