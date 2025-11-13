@@ -3,9 +3,9 @@ import { Graphics } from "pixi.js";
 import { extend } from "@pixi/react";
 import { KawaseBlurFilter } from "pixi-filters";
 
-extend({ Graphics });
+import { GeneratedPoints } from "./meteorUtils";
 
-type Point = { x: number; y: number };
+extend({ Graphics });
 
 // Shared Layer Component for both circles and rectangles
 type LayerProps = {
@@ -84,7 +84,7 @@ export function MeteorShapeLayer(props: MeteorShapeLayerProps) {
 
 // Simple Points-Based Layer - draws meteor along a path defined by points
 export type PointsBasedLayerProps = {
-  points: Point[];
+  points: GeneratedPoints;
   width: number;
   color: number;
   alpha: number;
@@ -107,12 +107,7 @@ export function PointsBasedLayer(props: PointsBasedLayerProps) {
       if (usedPoints.length < 2) return;
 
       const firstPoint = usedPoints[0];
-      const secondPoint = usedPoints[1];
-
-      // Calculate direction at the head
-      const dx = secondPoint.x - firstPoint.x;
-      const dy = secondPoint.y - firstPoint.y;
-      const angle = Math.atan2(dy, dx);
+      const angle = Math.atan2(firstPoint.tangent.dy, firstPoint.tangent.dx);
 
       // Starting width (full width at head)
       const headWidth = width;
@@ -137,11 +132,9 @@ export function PointsBasedLayer(props: PointsBasedLayerProps) {
       // Now draw along one side of the body (starting from bottom of head)
       for (let i = 1; i < usedPoints.length; i++) {
         const curr = usedPoints[i];
-        const next = usedPoints[i + 1] || curr;
-
-        // Calculate perpendicular direction
-        const dx = next.x - curr.x;
-        const dy = next.y - curr.y;
+        const {
+          tangent: { dx, dy },
+        } = usedPoints[i];
         const len = Math.sqrt(dx * dx + dy * dy) || 1;
 
         // Taper width along the path (100% at start, narrow at end)
@@ -160,10 +153,9 @@ export function PointsBasedLayer(props: PointsBasedLayerProps) {
       // Draw back along the other side
       for (let i = usedPoints.length - 1; i >= 1; i--) {
         const curr = usedPoints[i];
-        const next = usedPoints[Math.min(i + 1, usedPoints.length - 1)];
-
-        const dx = next.x - curr.x;
-        const dy = next.y - curr.y;
+        const {
+          tangent: { dx, dy },
+        } = usedPoints[i];
         const len = Math.sqrt(dx * dx + dy * dy) || 1;
 
         const progress = i / (usedPoints.length - 1);

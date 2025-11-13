@@ -41,23 +41,37 @@ export function calculateColor(brightness: number): {
   return { color, alpha };
 }
 
+type Point2D = { x: number; y: number };
+
 type GeneratePointsByEquationParams = {
-  startPoint: { x: number; y: number };
-  equation: (t: number) => { x: number; y: number };
-  length: number;
+  origin?: Point2D;
+  equation: (t: number) => Point2D;
+  tStart?: number;
+  tEnd: number;
   segments: number;
+  includeTangents?: boolean;
 };
+
+export type GeneratedPoints = Array<
+  Point2D & { tangent: { dx: number; dy: number } }
+>;
 
 export function generatePointsByEquation(
   params: GeneratePointsByEquationParams
-): Array<{ x: number; y: number }> {
-  const { startPoint, equation, length, segments } = params;
-  return Array.from({ length: segments + 1 }, (_, i) => {
-    const t = (i / segments) * length;
-    const { x, y } = equation(t);
+): GeneratedPoints {
+  const origin = params.origin ?? { x: 0, y: 0 };
+  const { equation, tStart = 0, tEnd, segments } = params;
+
+  return Array.from({ length: segments }, (_, i) => {
+    const t = tStart + ((tEnd - tStart) * i) / segments;
+    const p = equation(t);
+    const next = equation(t + (tEnd - tStart) / segments);
+    const tangent = { dx: next.x - p.x, dy: next.y - p.y };
+
     return {
-      x: Math.round(startPoint.x + x),
-      y: Math.round(startPoint.y + y),
+      x: Math.round(origin.x + p.x),
+      y: Math.round(origin.y + p.y),
+      tangent,
     };
   });
 }

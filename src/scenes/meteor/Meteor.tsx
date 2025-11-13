@@ -21,7 +21,7 @@ export default function Meteor({ containerRef }: SceneProps) {
     >
       {/* <pixiContainer x={width - width / 16} y={height / 2}> */}
       <pixiContainer x={width / 2} y={height / 2}>
-        <MeteorGraphics width={width / 4} baseBlur={5} layers={5} />
+        <MeteorGraphics width={width / 2} baseBlur={3} layers={8} />
       </pixiContainer>
     </Application>
   );
