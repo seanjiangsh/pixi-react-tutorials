@@ -11,6 +11,11 @@ extend({ Container });
 export default function Meteor({ containerRef }: SceneProps) {
   const { width, height } = useSceneSize();
 
+  const minDimension = Math.min(width, height);
+  const maxDimension = Math.max(width, height);
+  const startWidth = maxDimension * 1.1;
+  const targetWidth = minDimension;
+
   return (
     <Application
       width={width}
@@ -19,9 +24,15 @@ export default function Meteor({ containerRef }: SceneProps) {
       resizeTo={containerRef}
       antialias
     >
-      {/* <pixiContainer x={width - width / 16} y={height / 2}> */}
       <pixiContainer x={width / 2} y={height / 2}>
-        <MeteorGraphics width={width / 2} baseBlur={3} layers={8} />
+        <MeteorGraphics
+          startWidth={startWidth}
+          targetWidth={targetWidth}
+          baseBlur={3}
+          layers={8}
+          screenWidth={width}
+          screenHeight={height}
+        />
       </pixiContainer>
     </Application>
   );

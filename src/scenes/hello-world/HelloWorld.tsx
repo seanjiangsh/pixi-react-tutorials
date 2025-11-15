@@ -70,7 +70,7 @@ export default function HelloWorld({ containerRef }: SceneProps) {
     <Application
       width={width}
       height={height}
-      background={0x1099bb}
+      background={"#1099bb"}
       resizeTo={containerRef}
     >
       <pixiContainer

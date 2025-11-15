@@ -97,21 +97,34 @@ export function generateCirclePath(params: {
   });
 }
 
-// Generate a rounded square path
-export function generateRoundedSquarePath(params: {
-  size: number;
+// Generate a rounded rectangle path
+export function generateRoundedRectPath(params: {
+  width: number;
+  height: number;
   radius: number;
   segments?: number;
   origin?: Point2D;
 }): GeneratedPoints {
-  const { size, radius, segments = 200, origin = { x: 0, y: 0 } } = params;
-  const halfSize = size / 2;
+  const {
+    width,
+    height,
+    radius,
+    segments = 200,
+    origin = { x: 0, y: 0 },
+  } = params;
+  const halfWidth = width / 2;
+  const halfHeight = height / 2;
 
-  // Calculate segment lengths
-  const straightLength = 2 * (halfSize - radius); // Full side minus both corner radii
+  // Calculate segment lengths for horizontal and vertical sides
+  const horizontalLength = 2 * (halfWidth - radius); // Top and bottom sides
+  const verticalLength = 2 * (halfHeight - radius); // Left and right sides
   const arcLength = (Math.PI / 2) * radius;
-  const sideLength = straightLength + arcLength;
-  const totalLength = sideLength * 4;
+  const bottomSideLength = horizontalLength + arcLength;
+  const leftSideLength = verticalLength + arcLength;
+  const topSideLength = horizontalLength + arcLength;
+  const rightSideLength = verticalLength + arcLength;
+  const totalLength =
+    bottomSideLength + leftSideLength + topSideLength + rightSideLength;
 
   return generatePointsByEquation({
     origin,
@@ -120,63 +133,77 @@ export function generateRoundedSquarePath(params: {
       t = Math.max(0, Math.min(t, totalLength - 0.0001));
 
       // Determine which segment (0-3) and position within segment
-      const segmentIndex = Math.floor(t / sideLength);
-      const segmentT = t - segmentIndex * sideLength;
+      let segmentIndex = 0;
+      let segmentT = t;
+
+      if (t < bottomSideLength) {
+        segmentIndex = 0;
+        segmentT = t;
+      } else if (t < bottomSideLength + leftSideLength) {
+        segmentIndex = 1;
+        segmentT = t - bottomSideLength;
+      } else if (t < bottomSideLength + leftSideLength + topSideLength) {
+        segmentIndex = 2;
+        segmentT = t - bottomSideLength - leftSideLength;
+      } else {
+        segmentIndex = 3;
+        segmentT = t - bottomSideLength - leftSideLength - topSideLength;
+      }
 
       let x = 0,
         y = 0;
 
       if (segmentIndex === 0) {
         // Segment 0: Bottom side (right to left) + bottom-left corner
-        if (segmentT <= straightLength) {
-          // Straight part: from (halfSize - radius, halfSize) to (-halfSize + radius, halfSize)
-          x = halfSize - radius - segmentT;
-          y = halfSize;
+        if (segmentT <= horizontalLength) {
+          // Straight part: from (halfWidth - radius, halfHeight) to (-halfWidth + radius, halfHeight)
+          x = halfWidth - radius - segmentT;
+          y = halfHeight;
         } else {
-          // Arc part: bottom-left corner (center at -halfSize + radius, halfSize - radius)
-          const arcProgress = (segmentT - straightLength) / arcLength;
+          // Arc part: bottom-left corner (center at -halfWidth + radius, halfHeight - radius)
+          const arcProgress = (segmentT - horizontalLength) / arcLength;
           const angle = Math.PI / 2 + arcProgress * (Math.PI / 2); // 90° to 180° (counter-clockwise)
-          x = -halfSize + radius + radius * Math.cos(angle);
-          y = halfSize - radius + radius * Math.sin(angle);
+          x = -halfWidth + radius + radius * Math.cos(angle);
+          y = halfHeight - radius + radius * Math.sin(angle);
         }
       } else if (segmentIndex === 1) {
         // Segment 1: Left side (bottom to top) + top-left corner
-        if (segmentT <= straightLength) {
-          // Straight part: from (-halfSize, halfSize - radius) to (-halfSize, -halfSize + radius)
-          x = -halfSize;
-          y = halfSize - radius - segmentT;
+        if (segmentT <= verticalLength) {
+          // Straight part: from (-halfWidth, halfHeight - radius) to (-halfWidth, -halfHeight + radius)
+          x = -halfWidth;
+          y = halfHeight - radius - segmentT;
         } else {
-          // Arc part: top-left corner (center at -halfSize + radius, -halfSize + radius)
-          const arcProgress = (segmentT - straightLength) / arcLength;
+          // Arc part: top-left corner (center at -halfWidth + radius, -halfHeight + radius)
+          const arcProgress = (segmentT - verticalLength) / arcLength;
           const angle = Math.PI + arcProgress * (Math.PI / 2); // 180° to 270° (counter-clockwise)
-          x = -halfSize + radius + radius * Math.cos(angle);
-          y = -halfSize + radius + radius * Math.sin(angle);
+          x = -halfWidth + radius + radius * Math.cos(angle);
+          y = -halfHeight + radius + radius * Math.sin(angle);
         }
       } else if (segmentIndex === 2) {
         // Segment 2: Top side (left to right) + top-right corner
-        if (segmentT <= straightLength) {
-          // Straight part: from (-halfSize + radius, -halfSize) to (halfSize - radius, -halfSize)
-          x = -halfSize + radius + segmentT;
-          y = -halfSize;
+        if (segmentT <= horizontalLength) {
+          // Straight part: from (-halfWidth + radius, -halfHeight) to (halfWidth - radius, -halfHeight)
+          x = -halfWidth + radius + segmentT;
+          y = -halfHeight;
         } else {
-          // Arc part: top-right corner (center at halfSize - radius, -halfSize + radius)
-          const arcProgress = (segmentT - straightLength) / arcLength;
+          // Arc part: top-right corner (center at halfWidth - radius, -halfHeight + radius)
+          const arcProgress = (segmentT - horizontalLength) / arcLength;
           const angle = (3 * Math.PI) / 2 + arcProgress * (Math.PI / 2); // 270° to 0° (counter-clockwise)
-          x = halfSize - radius + radius * Math.cos(angle);
-          y = -halfSize + radius + radius * Math.sin(angle);
+          x = halfWidth - radius + radius * Math.cos(angle);
+          y = -halfHeight + radius + radius * Math.sin(angle);
         }
       } else {
         // Segment 3: Right side (top to bottom) + bottom-right corner
-        if (segmentT <= straightLength) {
-          // Straight part: from (halfSize, -halfSize + radius) to (halfSize, halfSize - radius)
-          x = halfSize;
-          y = -halfSize + radius + segmentT;
+        if (segmentT <= verticalLength) {
+          // Straight part: from (halfWidth, -halfHeight + radius) to (halfWidth, halfHeight - radius)
+          x = halfWidth;
+          y = -halfHeight + radius + segmentT;
         } else {
-          // Arc part: bottom-right corner (center at halfSize - radius, halfSize - radius)
-          const arcProgress = (segmentT - straightLength) / arcLength;
+          // Arc part: bottom-right corner (center at halfWidth - radius, halfHeight - radius)
+          const arcProgress = (segmentT - verticalLength) / arcLength;
           const angle = arcProgress * (Math.PI / 2); // 0° to 90° (counter-clockwise)
-          x = halfSize - radius + radius * Math.cos(angle);
-          y = halfSize - radius + radius * Math.sin(angle);
+          x = halfWidth - radius + radius * Math.cos(angle);
+          y = halfHeight - radius + radius * Math.sin(angle);
         }
       }
 

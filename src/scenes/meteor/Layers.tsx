@@ -7,10 +7,14 @@ import { GeneratedPoints } from "./meteorUtils";
 
 extend({ Graphics });
 
-// Shared Layer Component for both circles and rectangles
-type LayerProps = {
-  color: number;
+// Common color and alpha type
+export type ColorAlpha = {
+  color: number | string;
   alpha: number;
+};
+
+// Shared Layer Component for both circles and rectangles
+type LayerProps = ColorAlpha & {
   blurStrength: number;
   draw: (g: Graphics) => void;
 };
@@ -41,11 +45,9 @@ export function Layer(props: LayerProps) {
 }
 
 // Combined Meteor Layer (semicircle head + triangle tail in one graphic)
-export type MeteorShapeLayerProps = {
+export type MeteorShapeLayerProps = ColorAlpha & {
   circleRadius: number;
   tailLength: number;
-  color: number;
-  alpha: number;
   blurStrength: number;
 };
 
@@ -82,12 +84,80 @@ export function MeteorShapeLayer(props: MeteorShapeLayerProps) {
   );
 }
 
+// Path Fill Layer - fills the area enclosed by path with dim color and optional border
+export type PathFillLayerProps = {
+  points: GeneratedPoints;
+  fill: ColorAlpha;
+  border?: ColorAlpha & {
+    width: number;
+    blur?: number;
+  };
+};
+
+export function PathFillLayer(props: PathFillLayerProps) {
+  const { points, fill, border } = props;
+
+  // Draw fill area
+  const drawFill = useCallback(
+    (g: Graphics) => {
+      if (points.length < 3) return;
+
+      g.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        g.lineTo(points[i].x, points[i].y);
+      }
+      g.closePath();
+      g.fill();
+    },
+    [points]
+  );
+
+  // Draw border if specified
+  const drawBorder = useCallback(
+    (g: Graphics) => {
+      if (points.length < 3 || !border) return;
+
+      g.setStrokeStyle({
+        color: border.color,
+        alpha: border.alpha,
+        width: border.width,
+      });
+      g.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        g.lineTo(points[i].x, points[i].y);
+      }
+      g.closePath();
+      g.stroke();
+    },
+    [points, border]
+  );
+
+  return (
+    <>
+      {/* Fill layer */}
+      <Layer
+        color={fill.color}
+        alpha={fill.alpha}
+        blurStrength={0}
+        draw={drawFill}
+      />
+      {/* Border layer with optional blur */}
+      {border && (
+        <Layer
+          color={border.color}
+          alpha={border.alpha}
+          blurStrength={border.blur || 0}
+          draw={drawBorder}
+        />
+      )}
+    </>
+  );
+}
+
 // Simple Points-Based Layer - draws meteor along a path defined by points
-export type PointsBasedLayerProps = {
+export type PointsBasedLayerProps = ColorAlpha & {
   points: GeneratedPoints;
   width: number;
-  color: number;
-  alpha: number;
   blurStrength: number;
   lengthRatio?: number; // 0-1, how much of the points array to use
 };

@@ -31,7 +31,7 @@ export default function BluredText(props: BluredTextProps) {
       style={
         new TextStyle({
           align: "center",
-          fill: "0xffffff",
+          fill: "#ffffff",
           fontSize,
           letterSpacing: 10,
           dropShadow: {

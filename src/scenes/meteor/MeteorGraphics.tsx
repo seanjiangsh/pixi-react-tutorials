@@ -1,27 +1,56 @@
 import { useMemo, useState, useCallback } from "react";
 import { useTick } from "@pixi/react";
 
-import { PointsBasedLayer } from "src/scenes/meteor/Layers";
+import { PointsBasedLayer, PathFillLayer } from "src/scenes/meteor/Layers";
 import {
   calculateColor,
   generateCirclePath,
-  generateRoundedSquarePath,
+  generateRoundedRectPath,
 } from "src/scenes/meteor/meteorUtils";
 
 // Meteor Graphics Component - draws meteor along points
 type MeteorGraphicsProps = {
-  width: number;
+  startWidth: number;
+  targetWidth: number;
   baseBlur: number;
   layers?: number;
+  screenWidth: number;
+  screenHeight: number;
 };
 
 export function MeteorGraphics(props: MeteorGraphicsProps) {
-  const { width, baseBlur, layers = 15 } = props;
+  const {
+    startWidth,
+    targetWidth,
+    baseBlur,
+    layers = 15,
+    screenWidth,
+    screenHeight,
+  } = props;
+
+  // Animated width that shrinks from startWidth to targetWidth over 3 seconds
+  const [animationProgress, setAnimationProgress] = useState(0);
+
+  // Animation for shrinking effect (runs once on mount)
+  const animateShrink = useCallback(() => {
+    if (animationProgress < 1) {
+      setAnimationProgress((prev) => Math.min(prev + 1 / (60 * 3), 1)); // 60fps * 3 seconds
+    }
+  }, [animationProgress]);
+
+  useTick(animationProgress < 1 ? animateShrink : () => {});
+
+  // Calculate width based on animation progress (ease-out cubic)
+  const width = useMemo(() => {
+    const t = animationProgress;
+    const eased = 1 - Math.pow(1 - t, 3); // cubic ease-out
+    return startWidth + (targetWidth - startWidth) * eased;
+  }, [animationProgress, startWidth, targetWidth]);
 
   // Animation offset (0 to 1, representing position along the path)
   const [offset, setOffset] = useState(0);
 
-  // Animation function using useTick
+  // Animation function for path traversal (starts immediately)
   const animateOffset = useCallback(() => {
     setOffset((prev) => (prev - 0.005 + 1) % 1); // Counter-clockwise: decrement and loop
   }, []);
@@ -29,6 +58,7 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
   useTick(animateOffset);
 
   // Generate the FULL circle path once (memoized by width only)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const circleFullPath = useMemo(() => {
     return generateCirclePath({
       radius: width * 0.4,
@@ -36,21 +66,36 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
     });
   }, [width]);
 
-  // Generate the FULL rounded square path once (memoized by width only)
-  const roundedSquareFullPath = useMemo(() => {
-    const size = width * 0.8; // Square size
-    const radius = width * 0.1; // Corner radius
+  // Generate the FULL rounded rectangle path with animated shrinking
+  const roundedRectFullPath = useMemo(() => {
+    const margin = 64;
 
-    return generateRoundedSquarePath({
-      size,
+    // Animate rect dimensions during shrink (start larger, end at screen size with margin)
+    const t = animationProgress;
+    const eased = 1 - Math.pow(1 - t, 3); // cubic ease-out
+
+    const startRectWidth = screenWidth * 1.3;
+    const startRectHeight = screenHeight * 1.3;
+    const targetRectWidth = screenWidth - margin * 2;
+    const targetRectHeight = screenHeight - margin * 2;
+
+    const rectWidth =
+      startRectWidth + (targetRectWidth - startRectWidth) * eased;
+    const rectHeight =
+      startRectHeight + (targetRectHeight - startRectHeight) * eased;
+    const radius = 32;
+
+    return generateRoundedRectPath({
+      width: rectWidth,
+      height: rectHeight,
       radius,
-      segments: 200,
+      segments: 500,
     });
-  }, [width]);
+  }, [screenWidth, screenHeight, animationProgress]);
 
-  // Use rounded square path for rendering (swap with circleFullPath to use circle)
+  // Use rounded rectangle path for rendering (swap with circleFullPath to use circle)
   // const fullPath = circleFullPath;
-  const fullPath = roundedSquareFullPath;
+  const fullPath = roundedRectFullPath;
 
   // Extract a section of the path based on current offset
   const visibleRatio = 0.25;
@@ -117,6 +162,20 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
 
   return (
     <>
+      {/* Dim brownish-gray fill for the path area */}
+      <PathFillLayer
+        points={fullPath}
+        fill={{
+          color: "#3d3228", // Dim brownish-gray
+          alpha: 0.35,
+        }}
+        border={{
+          color: "#6a5a48", // Brighter brownish-gray
+          alpha: 0.6,
+          width: 2,
+          blur: 3, // Blur to blend in more
+        }}
+      />
       {meteorLayers.map((layer, index) => (
         <PointsBasedLayer
           key={index}

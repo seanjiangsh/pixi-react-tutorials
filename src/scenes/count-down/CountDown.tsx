@@ -13,7 +13,7 @@ const moveTrashold = 70;
 const moveRange = 100 - moveTrashold;
 
 const textStyle = new TextStyle({
-  fill: "0xffffff",
+  fill: "#ffffff",
   align: "center",
   fontSize: textHeight * 0.8,
 });
@@ -80,7 +80,7 @@ export default function CountDown({ containerRef }: SceneProps) {
     <Application
       width={width}
       height={height}
-      background={0x1099bb}
+      background={"#1099bb"}
       resizeTo={containerRef}
     >
       <pixiGraphics width={width} height={textHeight} draw={drawTextBG} />
