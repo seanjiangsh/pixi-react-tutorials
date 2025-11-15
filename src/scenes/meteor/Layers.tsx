@@ -129,45 +129,33 @@ export function PointsBasedLayer(props: PointsBasedLayerProps) {
         false
       );
 
-      // Now draw along one side of the body (starting from bottom of head)
+      // Helper to get perpendicular offset for a point
+      const getPerpendicularOffset = (
+        point: (typeof usedPoints)[number],
+        index: number
+      ) => {
+        const { dx, dy } = point.tangent;
+        const len = Math.sqrt(dx * dx + dy * dy) || 1;
+        const progress = index / (usedPoints.length - 1);
+        const currentWidth = width * (1 - progress * (1 - endRatio));
+        return {
+          perpX: (-dy / len) * currentWidth,
+          perpY: (dx / len) * currentWidth,
+        };
+      };
+
+      // Draw along one side of the body (starting from bottom of head)
       for (let i = 1; i < usedPoints.length; i++) {
         const curr = usedPoints[i];
-        const {
-          tangent: { dx, dy },
-        } = usedPoints[i];
-        const len = Math.sqrt(dx * dx + dy * dy) || 1;
-
-        // Taper width along the path (100% at start, narrow at end)
-        const progress = i / (usedPoints.length - 1);
-        const currentWidth = width * (1 - progress * (1 - endRatio));
-
-        const perpX = (-dy / len) * currentWidth;
-        const perpY = (dx / len) * currentWidth;
-
-        const x = curr.x - perpX;
-        const y = curr.y - perpY;
-
-        g.lineTo(x, y);
+        const { perpX, perpY } = getPerpendicularOffset(curr, i);
+        g.lineTo(curr.x - perpX, curr.y - perpY);
       }
 
       // Draw back along the other side
       for (let i = usedPoints.length - 1; i >= 1; i--) {
         const curr = usedPoints[i];
-        const {
-          tangent: { dx, dy },
-        } = usedPoints[i];
-        const len = Math.sqrt(dx * dx + dy * dy) || 1;
-
-        const progress = i / (usedPoints.length - 1);
-        const currentWidth = width * (1 - progress * (1 - endRatio));
-
-        const perpX = (-dy / len) * currentWidth;
-        const perpY = (dx / len) * currentWidth;
-
-        const x = curr.x + perpX;
-        const y = curr.y + perpY;
-
-        g.lineTo(x, y);
+        const { perpX, perpY } = getPerpendicularOffset(curr, i);
+        g.lineTo(curr.x + perpX, curr.y + perpY);
       }
 
       g.closePath();
