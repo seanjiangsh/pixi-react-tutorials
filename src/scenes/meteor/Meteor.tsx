@@ -1,39 +1,85 @@
-import { Application, extend } from "@pixi/react";
-import { Container } from "pixi.js";
+import React from "react";
+import { Application } from "@pixi/react";
 
 import useSceneSize from "src/utils/useSceneSize";
 import { SceneProps } from "src/scenes/sceneLoader";
 import { MeteorGraphics } from "src/scenes/meteor/MeteorGraphics";
 
-// extend tells @pixi/react what Pixi.js components are available
-extend({ Container });
-
 export default function Meteor({ containerRef }: SceneProps) {
   const { width, height } = useSceneSize();
 
-  const minDimension = Math.min(width, height);
-  const maxDimension = Math.max(width, height);
-  const startWidth = maxDimension * 1.1;
-  const targetWidth = minDimension;
+  const [pathType, setPathType] = React.useState<"rect" | "circle">("rect");
+  const [resetKey, setResetKey] = React.useState(0);
+
+  const handleReset = () => {
+    setResetKey((prev) => prev + 1);
+  };
+
+  const handlePathTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setPathType(e.target.value as "rect" | "circle");
+  };
 
   return (
-    <Application
-      width={width}
-      height={height}
-      background={0x0a0e27}
-      resizeTo={containerRef}
-      antialias
-    >
-      <pixiContainer x={width / 2} y={height / 2}>
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <Application
+        width={width}
+        height={height}
+        background={0x0a0e27}
+        resizeTo={containerRef}
+        antialias
+      >
         <MeteorGraphics
-          startWidth={startWidth}
-          targetWidth={targetWidth}
+          key={resetKey}
+          width={width}
+          height={height}
+          startRatio={1.1}
           baseBlur={3}
-          layers={8}
-          screenWidth={width}
-          screenHeight={height}
+          layers={10}
+          pathType={pathType}
         />
-      </pixiContainer>
-    </Application>
+      </Application>
+      <div
+        style={{
+          position: "absolute",
+          top: "16px",
+          left: "16px",
+          display: "flex",
+          gap: "12px",
+          alignItems: "center",
+          zIndex: 1000,
+        }}
+      >
+        <button
+          onClick={handleReset}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#3d3228",
+            color: "#fff",
+            border: "1px solid #6a5a48",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "14px",
+          }}
+        >
+          Reset Animation
+        </button>
+        <select
+          value={pathType}
+          onChange={handlePathTypeChange}
+          style={{
+            padding: "8px 12px",
+            backgroundColor: "#3d3228",
+            color: "#fff",
+            border: "1px solid #6a5a48",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "14px",
+          }}
+        >
+          <option value="rect">Rectangle Path</option>
+          <option value="circle">Circle Path</option>
+        </select>
+      </div>
+    </div>
   );
 }

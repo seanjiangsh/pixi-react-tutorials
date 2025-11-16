@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
-import { useTick } from "@pixi/react";
+import { extend, useTick } from "@pixi/react";
+import { Container } from "pixi.js";
 
 import { PointsBasedLayer, PathFillLayer } from "src/scenes/meteor/Layers";
 import {
@@ -8,40 +9,44 @@ import {
   generateRoundedRectPath,
 } from "src/scenes/meteor/meteorUtils";
 
+extend({ Container });
+
 // Meteor Graphics Component - draws meteor along points
 type MeteorGraphicsProps = {
-  startWidth: number;
-  targetWidth: number;
+  width: number;
+  height: number;
+  startRatio?: number;
   baseBlur: number;
   layers?: number;
-  screenWidth: number;
-  screenHeight: number;
+  pathType?: "rect" | "circle";
 };
 
 export function MeteorGraphics(props: MeteorGraphicsProps) {
-  const {
-    startWidth,
-    targetWidth,
-    baseBlur,
-    layers = 15,
-    screenWidth,
-    screenHeight,
-  } = props;
+  const { width, height, startRatio = 1.3 } = props;
+  const { baseBlur, layers = 15, pathType = "rect" } = props;
+
+  const minDimension = Math.min(width, height);
+  const maxDimension = Math.max(width, height);
+  const startWidth = maxDimension * startRatio;
+  const targetWidth = minDimension;
 
   // Animated width that shrinks from startWidth to targetWidth over 3 seconds
   const [animationProgress, setAnimationProgress] = useState(0);
 
   // Animation for shrinking effect (runs once on mount)
   const animateShrink = useCallback(() => {
-    if (animationProgress < 1) {
-      setAnimationProgress((prev) => Math.min(prev + 1 / (60 * 3), 1)); // 60fps * 3 seconds
-    }
+    if (animationProgress >= 1) return;
+
+    setAnimationProgress((prev) => {
+      const newProgress = Math.min(prev + 1 / (60 * 3), 1);
+      return newProgress;
+    });
   }, [animationProgress]);
 
   useTick(animationProgress < 1 ? animateShrink : () => {});
 
   // Calculate width based on animation progress (ease-out cubic)
-  const width = useMemo(() => {
+  const progressWidth = useMemo(() => {
     const t = animationProgress;
     const eased = 1 - Math.pow(1 - t, 3); // cubic ease-out
     return startWidth + (targetWidth - startWidth) * eased;
@@ -58,13 +63,12 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
   useTick(animateOffset);
 
   // Generate the FULL circle path once (memoized by width only)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const circleFullPath = useMemo(() => {
     return generateCirclePath({
-      radius: width * 0.4,
+      radius: progressWidth * 0.4,
       segments: 100,
     });
-  }, [width]);
+  }, [progressWidth]);
 
   // Generate the FULL rounded rectangle path with animated shrinking
   const roundedRectFullPath = useMemo(() => {
@@ -74,10 +78,10 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
     const t = animationProgress;
     const eased = 1 - Math.pow(1 - t, 3); // cubic ease-out
 
-    const startRectWidth = screenWidth * 1.3;
-    const startRectHeight = screenHeight * 1.3;
-    const targetRectWidth = screenWidth - margin * 2;
-    const targetRectHeight = screenHeight - margin * 2;
+    const startRectWidth = width * startRatio;
+    const startRectHeight = height * startRatio;
+    const targetRectWidth = width - margin * 2;
+    const targetRectHeight = height - margin * 2;
 
     const rectWidth =
       startRectWidth + (targetRectWidth - startRectWidth) * eased;
@@ -91,11 +95,10 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
       radius,
       segments: 500,
     });
-  }, [screenWidth, screenHeight, animationProgress]);
+  }, [animationProgress, width, startRatio, height]);
 
-  // Use rounded rectangle path for rendering (swap with circleFullPath to use circle)
-  // const fullPath = circleFullPath;
-  const fullPath = roundedRectFullPath;
+  // Use path based on pathType prop
+  const fullPath = pathType === "circle" ? circleFullPath : roundedRectFullPath;
 
   // Extract a section of the path based on current offset
   const visibleRatio = 0.25;
@@ -131,7 +134,7 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
       const sizeMultiplier = Math.pow(inverseProgress, 3);
 
       // Width for the meteor
-      const minWidth = maxWidth * 0.01; // 1% minimum
+      const minWidth = maxWidth * 0.03;
       const width = minWidth + maxWidth * sizeMultiplier;
 
       // Length ratio: outer layers are shorter, inner layers are longer
@@ -161,7 +164,7 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
   }, [baseBlur, layers, width]);
 
   return (
-    <>
+    <pixiContainer x={width / 2} y={height / 2} alpha={animationProgress}>
       {/* Dim brownish-gray fill for the path area */}
       <PathFillLayer
         points={fullPath}
@@ -187,6 +190,6 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
           blurStrength={layer.blurStrength}
         />
       ))}
-    </>
+    </pixiContainer>
   );
 }
