@@ -1,14 +1,14 @@
 import { useState } from "react";
 import "src/App.css";
 
-import { ThemeName } from "src/scenes/sceneLoader";
+import { SceneName } from "src/scenes/Scenes";
 import Header from "src/components/Header";
 import Scene from "src/components/Scene";
 
 export default function App() {
-  const [activeTheme, setActiveTheme] = useState<ThemeName | null>(null);
+  const [activeTheme, setActiveTheme] = useState<SceneName>("Meteor");
 
-  const loadScene = (sceneName: ThemeName) => {
+  const loadScene = (sceneName: SceneName) => {
     setActiveTheme(sceneName);
   };
 

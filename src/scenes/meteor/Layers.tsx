@@ -1,50 +1,11 @@
 import { useCallback, useMemo } from "react";
 import { Graphics } from "pixi.js";
-import { extend } from "@pixi/react";
-import { KawaseBlurFilter } from "pixi-filters";
 
-import { GeneratedPoints } from "./meteorUtils";
+import { type GeneratedPoints } from "src/utils/graphics/misc";
+import { type ColorAlpha } from "src/types/types";
+import { BlurGfx } from "src/utils/graphics/draw";
 
-extend({ Graphics });
-
-// Common color and alpha type
-export type ColorAlpha = {
-  color: number | string;
-  alpha: number;
-};
-
-// Shared Layer Component for both circles and rectangles
-type LayerProps = ColorAlpha & {
-  blurStrength: number;
-  draw: (g: Graphics) => void;
-};
-
-export function Layer(props: LayerProps) {
-  const { color, alpha, blurStrength, draw } = props;
-
-  const blurFilter = useMemo(
-    () =>
-      blurStrength > 0
-        ? new KawaseBlurFilter({ strength: blurStrength, quality: 10 })
-        : null,
-    [blurStrength]
-  );
-
-  const drawGraphics = useCallback(
-    (g: Graphics) => {
-      g.clear();
-      g.setFillStyle({ color, alpha });
-      draw(g);
-    },
-    [color, alpha, draw]
-  );
-
-  const filters = blurFilter ? [blurFilter] : undefined;
-  // return <pixiGraphics draw={drawGraphics} />;
-  return <pixiGraphics draw={drawGraphics} filters={filters} />;
-}
-
-// Combined Meteor Layer (semicircle head + triangle tail in one graphic)
+// Combined Meteor BlurGfx (semicircle head + triangle tail in one graphic)
 export type MeteorShapeLayerProps = ColorAlpha & {
   circleRadius: number;
   tailLength: number;
@@ -75,7 +36,7 @@ export function MeteorShapeLayer(props: MeteorShapeLayerProps) {
   );
 
   return (
-    <Layer
+    <BlurGfx
       color={color}
       alpha={alpha}
       blurStrength={blurStrength}
@@ -84,7 +45,7 @@ export function MeteorShapeLayer(props: MeteorShapeLayerProps) {
   );
 }
 
-// Path Fill Layer - fills the area enclosed by path with dim color and optional border
+// Path Fill BlurGfx - fills the area enclosed by path with dim color and optional border
 export type PathFillLayerProps = {
   points: GeneratedPoints;
   fill: ColorAlpha;
@@ -135,7 +96,7 @@ export function PathFillLayer(props: PathFillLayerProps) {
   return (
     <>
       {/* Fill layer */}
-      <Layer
+      <BlurGfx
         color={fill.color}
         alpha={fill.alpha}
         blurStrength={0}
@@ -143,7 +104,7 @@ export function PathFillLayer(props: PathFillLayerProps) {
       />
       {/* Border layer with optional blur */}
       {border && (
-        <Layer
+        <BlurGfx
           color={border.color}
           alpha={border.alpha}
           blurStrength={border.blur || 0}
@@ -154,7 +115,7 @@ export function PathFillLayer(props: PathFillLayerProps) {
   );
 }
 
-// Simple Points-Based Layer - draws meteor along a path defined by points
+// Simple Points-Based BlurGfx - draws meteor along a path defined by points
 export type PointsBasedLayerProps = ColorAlpha & {
   points: GeneratedPoints;
   width: number;
@@ -235,7 +196,7 @@ export function PointsBasedLayer(props: PointsBasedLayerProps) {
   );
 
   return (
-    <Layer
+    <BlurGfx
       color={color}
       alpha={alpha}
       blurStrength={blurStrength}

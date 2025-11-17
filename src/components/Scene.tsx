@@ -1,15 +1,15 @@
 import { useRef } from "react";
 
 import "src/components/Scene.css";
-import { ThemeLoader, ThemeName } from "src/scenes/sceneLoader";
+import { Scenes, SceneName } from "src/scenes/Scenes";
 
 type SceneProps = {
-  sceneName: ThemeName;
+  sceneName: SceneName;
 };
 
 export default function Scene({ sceneName }: SceneProps) {
   const sceneRef = useRef<HTMLDivElement>(null);
-  const SceneComponent = ThemeLoader[sceneName];
+  const SceneComponent = Scenes[sceneName];
 
   return (
     <div className="scene" ref={sceneRef}>

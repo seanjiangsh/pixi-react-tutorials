@@ -1,9 +1,9 @@
-import { ThemeLoader, type ThemeName } from "src/scenes/sceneLoader";
+import { Scenes, type SceneName } from "src/scenes/Scenes";
 import "src/components/SceneButtonList.css";
 
 type SceneButtonListProps = {
-  activeTheme: ThemeName | null;
-  loadScene: (sceneName: ThemeName) => void;
+  activeTheme: SceneName | null;
+  loadScene: (sceneName: SceneName) => void;
 };
 
 export default function SceneButtonList(props: SceneButtonListProps) {
@@ -11,14 +11,14 @@ export default function SceneButtonList(props: SceneButtonListProps) {
 
   return (
     <div className="button-list">
-      {Object.entries(ThemeLoader).map(([themeName]) => (
+      {Object.entries(Scenes).map(([SceneName]) => (
         <button
-          key={themeName}
-          onClick={() => loadScene(themeName as ThemeName)}
-          className={activeTheme === themeName ? "active" : ""}
-          disabled={activeTheme === themeName}
+          key={SceneName}
+          onClick={() => loadScene(SceneName as SceneName)}
+          className={activeTheme === SceneName ? "active" : ""}
+          disabled={activeTheme === SceneName}
         >
-          {themeName}
+          {SceneName}
         </button>
       ))}
     </div>

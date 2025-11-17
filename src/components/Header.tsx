@@ -1,11 +1,11 @@
 import "src/components/Header.css";
 import SceneButtonList from "src/components/SceneButtonList";
 
-import { type ThemeName } from "src/scenes/sceneLoader";
+import { type SceneName } from "src/scenes/Scenes";
 
 type HeaderProps = {
-  activeTheme: ThemeName | null;
-  loadScene: (sceneName: ThemeName) => void;
+  activeTheme: SceneName | null;
+  loadScene: (sceneName: SceneName) => void;
 };
 
 export default function Header(props: HeaderProps) {
@@ -13,7 +13,7 @@ export default function Header(props: HeaderProps) {
 
   return (
     <header>
-      <h1>Pixi React</h1>
+      <h3>Pixi React</h3>
       <SceneButtonList activeTheme={activeTheme} loadScene={loadScene} />
     </header>
   );

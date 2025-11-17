@@ -1,56 +1,73 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { extend, useTick } from "@pixi/react";
 import { Container } from "pixi.js";
+import { CustomEase } from "gsap/CustomEase";
+import { gsap } from "gsap";
 
 import { PointsBasedLayer, PathFillLayer } from "src/scenes/meteor/Layers";
 import {
-  calculateColor,
   generateCirclePath,
   generateRoundedRectPath,
-} from "src/scenes/meteor/meteorUtils";
+} from "src/utils/graphics/path";
+import { genHSLTransitionColor } from "src/utils/graphics/misc";
 
 extend({ Container });
+
+// Register GSAP CustomEase plugin
+gsap.registerPlugin(CustomEase);
+
+// Create cubic-bezier ease-out and get the ease function
+CustomEase.create("cubicEaseOut", ".17,.67,.83,.67");
+const cubicEaseOut = gsap.parseEase("cubicEaseOut");
+
+export const PathTypes = ["rect", "circle"] as const;
+export type PathType = (typeof PathTypes)[number];
 
 // Meteor Graphics Component - draws meteor along points
 type MeteorGraphicsProps = {
   width: number;
   height: number;
   startRatio?: number;
-  baseBlur: number;
+  baseBlur?: number;
   layers?: number;
-  pathType?: "rect" | "circle";
+  shrinkDuration?: number;
+  pathType?: PathType;
 };
 
 export function MeteorGraphics(props: MeteorGraphicsProps) {
-  const { width, height, startRatio = 1.3 } = props;
-  const { baseBlur, layers = 15, pathType = "rect" } = props;
+  const { width, height, startRatio = 1.1 } = props;
+  const { baseBlur = 3, layers = 10 } = props;
+  const { shrinkDuration = 2, pathType = "rect" } = props;
+
+  // Animated width that shrinks from startWidth to targetWidth over 3 seconds
+  const [animationProgress, setAnimationProgress] = useState(0);
 
   const minDimension = Math.min(width, height);
   const maxDimension = Math.max(width, height);
   const startWidth = maxDimension * startRatio;
   const targetWidth = minDimension;
+  const easedProgress = cubicEaseOut(animationProgress);
 
-  // Animated width that shrinks from startWidth to targetWidth over 3 seconds
-  const [animationProgress, setAnimationProgress] = useState(0);
+  // Calc "reverted cubic ease-out" for opacity (inverted: starts fast, ends slow)
+  // Instead of ease-out (slow start, fast end), we want ease-in (fast start, slow end)
+  const containerOpacity = 1 - cubicEaseOut(1 - animationProgress);
 
   // Animation for shrinking effect (runs once on mount)
   const animateShrink = useCallback(() => {
     if (animationProgress >= 1) return;
 
     setAnimationProgress((prev) => {
-      const newProgress = Math.min(prev + 1 / (60 * 3), 1);
+      const newProgress = Math.min(prev + 1 / (60 * shrinkDuration), 1);
       return newProgress;
     });
-  }, [animationProgress]);
+  }, [animationProgress, shrinkDuration]);
 
   useTick(animationProgress < 1 ? animateShrink : () => {});
 
-  // Calculate width based on animation progress (ease-out cubic)
+  // Calculate width based on animation progress (GSAP cubic bezier ease-out)
   const progressWidth = useMemo(() => {
-    const t = animationProgress;
-    const eased = 1 - Math.pow(1 - t, 3); // cubic ease-out
-    return startWidth + (targetWidth - startWidth) * eased;
-  }, [animationProgress, startWidth, targetWidth]);
+    return startWidth + (targetWidth - startWidth) * easedProgress;
+  }, [easedProgress, startWidth, targetWidth]);
 
   // Animation offset (0 to 1, representing position along the path)
   const [offset, setOffset] = useState(0);
@@ -73,29 +90,31 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
   // Generate the FULL rounded rectangle path with animated shrinking
   const roundedRectFullPath = useMemo(() => {
     const margin = 64;
+    const cornerRadius = 32;
 
     // Animate rect dimensions during shrink (start larger, end at screen size with margin)
-    const t = animationProgress;
-    const eased = 1 - Math.pow(1 - t, 3); // cubic ease-out
-
     const startRectWidth = width * startRatio;
     const startRectHeight = height * startRatio;
     const targetRectWidth = width - margin * 2;
     const targetRectHeight = height - margin * 2;
 
     const rectWidth =
-      startRectWidth + (targetRectWidth - startRectWidth) * eased;
+      startRectWidth + (targetRectWidth - startRectWidth) * easedProgress;
     const rectHeight =
-      startRectHeight + (targetRectHeight - startRectHeight) * eased;
-    const radius = 32;
+      startRectHeight + (targetRectHeight - startRectHeight) * easedProgress;
 
     return generateRoundedRectPath({
       width: rectWidth,
       height: rectHeight,
-      radius,
+      radius: cornerRadius,
       segments: 500,
     });
-  }, [animationProgress, width, startRatio, height]);
+  }, [easedProgress, width, startRatio, height]);
+
+  useEffect(() => {
+    if (animationProgress < 1) return;
+    console.log(roundedRectFullPath);
+  }, [animationProgress, roundedRectFullPath]);
 
   // Use path based on pathType prop
   const fullPath = pathType === "circle" ? circleFullPath : roundedRectFullPath;
@@ -120,7 +139,7 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
     const result: Array<{
       width: number;
       lengthRatio: number;
-      color: number;
+      color: string;
       alpha: number;
       blurStrength: number;
     }> = [];
@@ -146,7 +165,7 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
 
       // Color and brightness
       const brightness = 0.4 + progress * 0.6; // Dimmer at outer, brighter at inner
-      const { color, alpha } = calculateColor(brightness);
+      const { color, alpha } = genHSLTransitionColor(25, brightness);
 
       // Quadratic blur: decreases quadratically from outer (progress=0) to inner (progress=1)
       const blurStrength = Math.pow(inverseProgress, 2) * 16 * baseBlur;
@@ -164,7 +183,7 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
   }, [baseBlur, layers, width]);
 
   return (
-    <pixiContainer x={width / 2} y={height / 2} alpha={animationProgress}>
+    <pixiContainer x={width / 2} y={height / 2} alpha={containerOpacity}>
       {/* Dim brownish-gray fill for the path area */}
       <PathFillLayer
         points={fullPath}

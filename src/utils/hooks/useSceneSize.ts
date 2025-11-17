@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useViewportSize, Size } from "src/utils/useViewport";
+import { useViewportSize, Size } from "src/utils/hooks/useViewport";
 
 export default function useSceneSize() {
   const viewportSize = useViewportSize();

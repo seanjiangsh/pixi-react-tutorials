@@ -9,9 +9,9 @@ import {
   Rectangle,
 } from "pixi.js";
 
-import useSceneSize from "src/utils/useSceneSize";
+import useSceneSize from "src/utils/hooks/useSceneSize";
 import BluredText from "src/scenes/hello-world/BluredText";
-import { SceneProps } from "src/scenes/sceneLoader";
+import { SceneProps } from "src/scenes/Scenes";
 
 // extend tells @pixi/react what Pixi.js components are available
 extend({ Container, Sprite });
