@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Graphics } from "pixi.js";
 import { extend } from "@pixi/react";
 import { KawaseBlurFilter } from "pixi-filters";

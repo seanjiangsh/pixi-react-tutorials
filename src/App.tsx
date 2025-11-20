@@ -6,7 +6,7 @@ import Header from "src/components/Header";
 import Scene from "src/components/Scene";
 
 export default function App() {
-  const [activeTheme, setActiveTheme] = useState<SceneName>("Meteor");
+  const [activeTheme, setActiveTheme] = useState<SceneName>("Lightning");
 
   const loadScene = (sceneName: SceneName) => {
     setActiveTheme(sceneName);
