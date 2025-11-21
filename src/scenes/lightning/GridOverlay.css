@@ -1,3 +1,25 @@
+@keyframes tilt-to-slope {
+  from {
+    transform: translate3d(0, 0, 0) perspective(8.5rem) rotate3d(1, 0, 0, 0deg)
+      scale(1, 1);
+  }
+  to {
+    transform: translate3d(-0.15%, -8.4%, 0) perspective(8rem)
+      rotate3d(1, 0, 0, 4.7deg) scale(1.024, 0.745);
+  }
+}
+
+@keyframes tilt-to-flat {
+  from {
+    transform: translate3d(-0.15%, -8.4%, 0) perspective(8rem)
+      rotate3d(1, 0, 0, 4.7deg) scale(1.024, 0.745);
+  }
+  to {
+    transform: translate3d(0, 0, 0) perspective(8.5rem) rotate3d(1, 0, 0, 0deg)
+      scale(1, 1);
+  }
+}
+
 .grid-overlay {
   position: absolute;
   top: 0;
@@ -9,6 +31,16 @@
   gap: 0;
   justify-content: center;
   align-content: center;
+  transform: translate3d(0, 0, 0) perspective(8.5rem) rotate3d(1, 0, 0, 0deg)
+    scale(1, 1);
+}
+
+.grid-overlay.flat {
+  animation: tilt-to-flat 1s cubic-bezier(0.47, 0, 0.05, 1) forwards;
+}
+
+.grid-overlay.slope {
+  animation: tilt-to-slope 1s cubic-bezier(0.47, 0, 0.05, 1) forwards;
 }
 
 .grid-cell {
@@ -21,6 +53,4 @@
 .grid-cell.focused {
   border: 2px solid rgba(237, 249, 255, 0.9);
   background-color: rgba(50, 108, 139, 0.1);
-  box-shadow: inset 0 0 5px rgba(149, 218, 255, 0.3),
-    0 0 10x rgba(255, 255, 255, 0.4);
 }

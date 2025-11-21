@@ -4,10 +4,7 @@ import { extend, useTick } from "@pixi/react";
 import { GlowFilter } from "pixi-filters";
 
 import { type Point2D } from "src/types/types";
-import {
-  generateLightningPath,
-  type LightningBolt,
-} from "src/utils/graphics/path";
+import { genLightningPath, type LightningBolt } from "src/utils/graphics/path";
 
 extend({ Graphics });
 
@@ -30,7 +27,7 @@ type LighteningGraphicsProps = {
   opacityVariation?: number;
 };
 
-export function LighteningGraphics(props: LighteningGraphicsProps) {
+export function LightningGfx(props: LighteningGraphicsProps) {
   const { width, height, boltAmount, displacement, jaggedness } = props;
   const { segmentPoints, segmentDensity, envelopeShape, smoothingIterations } =
     props;
@@ -152,53 +149,58 @@ export function LighteningGraphics(props: LighteningGraphicsProps) {
   }, [initialSegmentStates]);
 
   // Update offsets on each tick
-  useTick((delta) => {
-    const speed = (delta.deltaMS / (oscillationCycle * 1000)) * Math.PI * 2;
+  const updateSegments = useCallback(
+    (delta) => {
+      const speed = (delta.deltaMS / (oscillationCycle * 1000)) * Math.PI * 2;
 
-    setSegmentStates((prevStates) => {
-      return boltStructures.map((segments, boltIndex) => {
-        const prevBoltStates = prevStates[boltIndex] || [];
+      setSegmentStates((prevStates) => {
+        return boltStructures.map((segments, boltIndex) => {
+          const prevBoltStates = prevStates[boltIndex] || [];
 
-        return segments.map((seg, segIndex) => {
-          // First and last points don't move
-          if (segIndex === 0 || segIndex === segments.length - 1) {
-            return { offsetX: 0, offsetY: 0, velocityX: 0, velocityY: 0 };
-          }
+          return segments.map((seg, segIndex) => {
+            // First and last points don't move
+            if (segIndex === 0 || segIndex === segments.length - 1) {
+              return { offsetX: 0, offsetY: 0, velocityX: 0, velocityY: 0 };
+            }
 
-          const prevState = prevBoltStates[segIndex] || {
-            offsetX: 0,
-            offsetY: 0,
-            velocityX: 1,
-            velocityY: 0,
-          };
+            const prevState = prevBoltStates[segIndex] || {
+              offsetX: 0,
+              offsetY: 0,
+              velocityX: 1,
+              velocityY: 0,
+            };
 
-          // Calculate movement step
-          const stepSize = speed * 50;
-          let newVelocityX = prevState.velocityX;
-          let newVelocityY = prevState.velocityY;
-          let newX = prevState.offsetX + newVelocityX * stepSize;
-          let newY = prevState.offsetY + newVelocityY * stepSize;
+            // Calculate movement step
+            const stepSize = speed * 50;
+            let newVelocityX = prevState.velocityX;
+            let newVelocityY = prevState.velocityY;
+            let newX = prevState.offsetX + newVelocityX * stepSize;
+            let newY = prevState.offsetY + newVelocityY * stepSize;
 
-          // Bounce back if exceeding range
-          if (Math.abs(newX) > seg.rangeX) {
-            newX = Math.sign(newX) * seg.rangeX;
-            newVelocityX = -newVelocityX; // Reverse direction
-          }
-          if (Math.abs(newY) > seg.rangeY) {
-            newY = Math.sign(newY) * seg.rangeY;
-            newVelocityY = -newVelocityY; // Reverse direction
-          }
+            // Bounce back if exceeding range
+            if (Math.abs(newX) > seg.rangeX) {
+              newX = Math.sign(newX) * seg.rangeX;
+              newVelocityX = -newVelocityX; // Reverse direction
+            }
+            if (Math.abs(newY) > seg.rangeY) {
+              newY = Math.sign(newY) * seg.rangeY;
+              newVelocityY = -newVelocityY; // Reverse direction
+            }
 
-          return {
-            offsetX: newX,
-            offsetY: newY,
-            velocityX: newVelocityX,
-            velocityY: newVelocityY,
-          };
+            return {
+              offsetX: newX,
+              offsetY: newY,
+              velocityX: newVelocityX,
+              velocityY: newVelocityY,
+            };
+          });
         });
       });
-    });
-  });
+    },
+    [boltStructures, oscillationCycle]
+  );
+
+  useTick(updateSegments);
 
   // Animate segment points and draw jagged paths between them
   const lightningBolts = useMemo<LightningBolt[]>(() => {
@@ -224,7 +226,7 @@ export function LighteningGraphics(props: LighteningGraphicsProps) {
       // Draw jagged lightning between segment points
       const allPoints: Point2D[] = [];
       for (let i = 0; i < animatedSegments.length - 1; i++) {
-        const jaggedPath = generateLightningPath({
+        const jaggedPath = genLightningPath({
           start: animatedSegments[i],
           end: animatedSegments[i + 1],
           displacement: displacement * 0.3,

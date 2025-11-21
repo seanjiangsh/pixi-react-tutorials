@@ -5,9 +5,14 @@ import "./GridOverlay.css";
 type GridOverlayProps = {
   focusedCell: { col: number; row: number };
   onCellClick: (col: number, row: number) => void;
+  tiltMode: "flat" | "slope";
 };
 
-export function GridOverlay({ focusedCell, onCellClick }: GridOverlayProps) {
+export function GridOverlay({
+  focusedCell,
+  onCellClick,
+  tiltMode,
+}: GridOverlayProps) {
   const { width, height } = useSceneSize();
 
   // Calculate grid dimensions to make perfectly square cells
@@ -20,20 +25,20 @@ export function GridOverlay({ focusedCell, onCellClick }: GridOverlayProps) {
     let cols: number;
 
     if (isHorizontal) {
-      // Horizontal: occupy 60% of height
-      const gridHeight = height * 0.6;
+      // Horizontal: occupy 60% of width
+      const gridWidth = width * 0.6;
       const targetCellSize = 80;
-      rows = Math.max(1, Math.floor(gridHeight / targetCellSize));
-      cellSize = gridHeight / rows;
-      // Ensure grid width doesn't exceed available width
-      const maxCols = Math.floor(width / cellSize);
-      cols = Math.max(1, maxCols);
+      cols = Math.max(1, Math.floor(gridWidth / targetCellSize));
+      cellSize = gridWidth / cols;
+      // Ensure grid height doesn't exceed available height
+      const maxRows = Math.floor(height / cellSize);
+      rows = Math.max(1, maxRows);
 
-      // If grid would exceed width, recalculate cellSize to fit
-      if (cellSize * cols > width) {
-        cellSize = width / cols;
-        // Recalculate rows to maintain square cells
-        rows = Math.max(1, Math.floor((height * 0.6) / cellSize));
+      // If grid would exceed height, recalculate cellSize to fit
+      if (cellSize * rows > height) {
+        cellSize = height / rows;
+        // Recalculate cols to maintain square cells
+        cols = Math.max(1, Math.floor((width * 0.6) / cellSize));
       }
     } else {
       // Vertical: occupy 80% of height
@@ -49,7 +54,7 @@ export function GridOverlay({ focusedCell, onCellClick }: GridOverlayProps) {
       if (cellSize * cols > width) {
         cellSize = width / cols;
         // Recalculate rows to maintain square cells
-        rows = Math.max(1, Math.floor((height * 0.8) / cellSize));
+        rows = Math.max(1, Math.floor((height * 0.6) / cellSize));
       }
     }
 
@@ -69,7 +74,7 @@ export function GridOverlay({ focusedCell, onCellClick }: GridOverlayProps) {
 
   return (
     <div
-      className="grid-overlay"
+      className={`grid-overlay ${tiltMode}`}
       style={{
         gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
         gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,

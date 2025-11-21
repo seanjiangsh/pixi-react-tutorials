@@ -5,10 +5,10 @@ import { useControls, button, Leva } from "leva";
 import useSceneSize from "src/utils/hooks/useSceneSize";
 import { SceneProps } from "src/scenes/Scenes";
 import {
-  MeteorGraphics,
+  MeteorGfx,
   PathTypes,
   type PathType,
-} from "src/scenes/meteor/MeteorGraphics";
+} from "src/scenes/meteor/MeteorGfx";
 
 export default function Meteor({ containerRef }: SceneProps) {
   const { width, height } = useSceneSize();
@@ -61,7 +61,7 @@ export default function Meteor({ containerRef }: SceneProps) {
         resizeTo={containerRef}
         antialias
       >
-        <MeteorGraphics
+        <MeteorGfx
           key={resetKey}
           width={width}
           height={height}

@@ -5,7 +5,7 @@ import { genPointsByEquation } from "src/utils/graphics/misc";
 // Utility functions for path calculations
 
 // Generate a circular path
-export function generateCirclePath(params: {
+export function genCirclePath(params: {
   radius: number;
   segments?: number;
   origin?: Point2D;
@@ -25,83 +25,190 @@ export function generateCirclePath(params: {
   });
 }
 
-// Generate a rounded rectangle path
-type GenerateRoundedRectPathParams = {
+// Generate a rectangle path with optional individual corner radius
+type GenRectPathParams = {
   width: number;
   height: number;
-  radius: number;
+  radius?:
+    | number
+    | {
+        topLeft?: number;
+        topRight?: number;
+        bottomRight?: number;
+        bottomLeft?: number;
+      };
   segments?: number;
   origin?: Point2D;
 };
-export function generateRoundedRectPath(
-  params: GenerateRoundedRectPathParams
-): GeneratedPoints {
+export function genRectPath(params: GenRectPathParams): GeneratedPoints {
   const {
     width,
     height,
-    radius,
+    radius: radiusParam = 0,
     segments = 200,
     origin = { x: 0, y: 0 },
   } = params;
+
+  // Normalize radius to individual corners
+  const cornerRadius =
+    typeof radiusParam === "number"
+      ? {
+          topLeft: radiusParam,
+          topRight: radiusParam,
+          bottomRight: radiusParam,
+          bottomLeft: radiusParam,
+        }
+      : {
+          topLeft: radiusParam.topLeft ?? 0,
+          topRight: radiusParam.topRight ?? 0,
+          bottomRight: radiusParam.bottomRight ?? 0,
+          bottomLeft: radiusParam.bottomLeft ?? 0,
+        };
+
   const halfWidth = width / 2;
   const halfHeight = height / 2;
-  const straightH = halfWidth - radius;
-  const straightV = halfHeight - radius;
-  const arcLength = (Math.PI / 2) * radius;
 
-  // Helper type for rounded rectangle sides
-  type RectSide = {
-    straightLength: number;
-    arcLength: number;
-    straightStart: Point2D;
-    straightDir: Point2D; // Direction vector for straight part
-    arcCenter: Point2D;
-    arcStartAngle: number;
+  // Helper type for rectangle segments (straight or arc)
+  type RectSegment = {
+    type: "straight" | "arc";
+    length: number;
+    start: Point2D;
+    // For straight segments
+    dir?: Point2D;
+    // For arc segments
+    center?: Point2D;
+    startAngle?: number;
+    radius?: number;
   };
-  // Define the 4 sides (counter-clockwise from bottom-right)
-  const sides: RectSide[] = [
-    {
-      // Bottom: right to left
-      straightLength: 2 * straightH,
-      arcLength,
-      straightStart: { x: straightH, y: halfHeight },
-      straightDir: { x: -1, y: 0 },
-      arcCenter: { x: -straightH, y: straightV },
-      arcStartAngle: Math.PI / 2,
-    },
-    {
-      // Left: bottom to top
-      straightLength: 2 * straightV,
-      arcLength,
-      straightStart: { x: -halfWidth, y: straightV },
-      straightDir: { x: 0, y: -1 },
-      arcCenter: { x: -straightH, y: -straightV },
-      arcStartAngle: Math.PI,
-    },
-    {
-      // Top: left to right
-      straightLength: 2 * straightH,
-      arcLength,
-      straightStart: { x: -straightH, y: -halfHeight },
-      straightDir: { x: 1, y: 0 },
-      arcCenter: { x: straightH, y: -straightV },
-      arcStartAngle: (3 * Math.PI) / 2,
-    },
-    {
-      // Right: top to bottom
-      straightLength: 2 * straightV,
-      arcLength,
-      straightStart: { x: halfWidth, y: -straightV },
-      straightDir: { x: 0, y: 1 },
-      arcCenter: { x: straightH, y: straightV },
-      arcStartAngle: 0,
-    },
-  ];
 
-  // Calculate cumulative lengths for each side
-  const sideLengths = sides.map((s) => s.straightLength + s.arcLength);
-  const cumulativeLengths = sideLengths.reduce(
-    (acc, len) => [...acc, acc[acc.length - 1] + len],
+  // Build segments clockwise starting from top-left corner
+  const rectSegments: RectSegment[] = [];
+
+  // Starting point: left side of top edge (after top-left corner)
+  let currentX = -halfWidth + cornerRadius.topLeft;
+  let currentY = -halfHeight;
+
+  // Top edge: left to right
+  const topStraightLength =
+    width - cornerRadius.topLeft - cornerRadius.topRight;
+  if (topStraightLength > 0) {
+    rectSegments.push({
+      type: "straight",
+      length: topStraightLength,
+      start: { x: currentX, y: currentY },
+      dir: { x: 1, y: 0 },
+    });
+    currentX = halfWidth - cornerRadius.topRight;
+  }
+
+  // Top-right corner arc
+  if (cornerRadius.topRight > 0) {
+    rectSegments.push({
+      type: "arc",
+      length: (Math.PI / 2) * cornerRadius.topRight,
+      start: { x: currentX, y: currentY },
+      center: {
+        x: halfWidth - cornerRadius.topRight,
+        y: -halfHeight + cornerRadius.topRight,
+      },
+      startAngle: (3 * Math.PI) / 2,
+      radius: cornerRadius.topRight,
+    });
+    currentX = halfWidth;
+    currentY = -halfHeight + cornerRadius.topRight;
+  }
+
+  // Right edge: top to bottom
+  const rightStraightLength =
+    height - cornerRadius.topRight - cornerRadius.bottomRight;
+  if (rightStraightLength > 0) {
+    rectSegments.push({
+      type: "straight",
+      length: rightStraightLength,
+      start: { x: currentX, y: currentY },
+      dir: { x: 0, y: 1 },
+    });
+    currentY = halfHeight - cornerRadius.bottomRight;
+  }
+
+  // Bottom-right corner arc
+  if (cornerRadius.bottomRight > 0) {
+    rectSegments.push({
+      type: "arc",
+      length: (Math.PI / 2) * cornerRadius.bottomRight,
+      start: { x: currentX, y: currentY },
+      center: {
+        x: halfWidth - cornerRadius.bottomRight,
+        y: halfHeight - cornerRadius.bottomRight,
+      },
+      startAngle: 0,
+      radius: cornerRadius.bottomRight,
+    });
+    currentX = halfWidth - cornerRadius.bottomRight;
+    currentY = halfHeight;
+  }
+
+  // Bottom edge: right to left
+  const bottomStraightLength =
+    width - cornerRadius.bottomRight - cornerRadius.bottomLeft;
+  if (bottomStraightLength > 0) {
+    rectSegments.push({
+      type: "straight",
+      length: bottomStraightLength,
+      start: { x: currentX, y: currentY },
+      dir: { x: -1, y: 0 },
+    });
+    currentX = -halfWidth + cornerRadius.bottomLeft;
+  }
+
+  // Bottom-left corner arc
+  if (cornerRadius.bottomLeft > 0) {
+    rectSegments.push({
+      type: "arc",
+      length: (Math.PI / 2) * cornerRadius.bottomLeft,
+      start: { x: currentX, y: currentY },
+      center: {
+        x: -halfWidth + cornerRadius.bottomLeft,
+        y: halfHeight - cornerRadius.bottomLeft,
+      },
+      startAngle: Math.PI / 2,
+      radius: cornerRadius.bottomLeft,
+    });
+    currentX = -halfWidth;
+    currentY = halfHeight - cornerRadius.bottomLeft;
+  }
+
+  // Left edge: bottom to top
+  const leftStraightLength =
+    height - cornerRadius.bottomLeft - cornerRadius.topLeft;
+  if (leftStraightLength > 0) {
+    rectSegments.push({
+      type: "straight",
+      length: leftStraightLength,
+      start: { x: currentX, y: currentY },
+      dir: { x: 0, y: -1 },
+    });
+    currentY = -halfHeight + cornerRadius.topLeft;
+  }
+
+  // Top-left corner arc (completes the loop)
+  if (cornerRadius.topLeft > 0) {
+    rectSegments.push({
+      type: "arc",
+      length: (Math.PI / 2) * cornerRadius.topLeft,
+      start: { x: currentX, y: currentY },
+      center: {
+        x: -halfWidth + cornerRadius.topLeft,
+        y: -halfHeight + cornerRadius.topLeft,
+      },
+      startAngle: Math.PI,
+      radius: cornerRadius.topLeft,
+    });
+  }
+
+  // Calculate cumulative lengths for each segment
+  const cumulativeLengths = rectSegments.reduce(
+    (acc, seg) => [...acc, acc[acc.length - 1] + seg.length],
     [0]
   );
   const totalLength = cumulativeLengths[cumulativeLengths.length - 1];
@@ -111,31 +218,31 @@ export function generateRoundedRectPath(
     equation: (t: number) => {
       t = Math.max(0, Math.min(t, totalLength - 0.0001));
 
-      // Find which side we're on
-      let sideIndex = 0;
-      for (let i = 0; i < sides.length; i++) {
+      // Find which segment we're on
+      let segmentIndex = 0;
+      for (let i = 0; i < rectSegments.length; i++) {
         if (t < cumulativeLengths[i + 1]) {
-          sideIndex = i;
+          segmentIndex = i;
           break;
         }
       }
 
-      const sideT = t - cumulativeLengths[sideIndex];
-      const side = sides[sideIndex];
+      const segmentT = t - cumulativeLengths[segmentIndex];
+      const segment = rectSegments[segmentIndex];
 
-      if (sideT <= side.straightLength) {
-        // Straight part
+      if (segment.type === "straight") {
+        // Straight segment
         return {
-          x: side.straightStart.x + side.straightDir.x * sideT,
-          y: side.straightStart.y + side.straightDir.y * sideT,
+          x: segment.start.x + segment.dir!.x * segmentT,
+          y: segment.start.y + segment.dir!.y * segmentT,
         };
       } else {
-        // Arc part
-        const arcProgress = (sideT - side.straightLength) / side.arcLength;
-        const angle = side.arcStartAngle + arcProgress * (Math.PI / 2);
+        // Arc segment
+        const arcProgress = segmentT / segment.length;
+        const angle = segment.startAngle! + arcProgress * (Math.PI / 2);
         return {
-          x: side.arcCenter.x + radius * Math.cos(angle),
-          y: side.arcCenter.y + radius * Math.sin(angle),
+          x: segment.center!.x + segment.radius! * Math.cos(angle),
+          y: segment.center!.y + segment.radius! * Math.sin(angle),
         };
       }
     },
@@ -147,7 +254,7 @@ export function generateRoundedRectPath(
 }
 
 // Generate a lightning bolt path
-type GenerateLightningPathParams = {
+type GenLightningPathParams = {
   start: Point2D;
   end: Point2D;
   displacement?: number; // Maximum perpendicular displacement for zigzag effect
@@ -158,9 +265,7 @@ type GenerateLightningPathParams = {
   smoothingIterations?: number; // Number of smoothing passes (overrides jaggedness)
 };
 
-export function generateLightningPath(
-  params: GenerateLightningPathParams
-): Point2D[] {
+export function genLightningPath(params: GenLightningPathParams): Point2D[] {
   const { start, end } = params;
   const { displacement = 50, jaggedness = 0.5, seed = Math.random() } = params;
   const {
@@ -235,7 +340,7 @@ export function generateLightningPath(
 }
 
 // Generate lightning with branches
-type GenerateLightningWithBranchesParams = GenerateLightningPathParams & {
+type GenLightningWithBranchesParams = GenLightningPathParams & {
   branchProbability?: number; // Probability of branching at each point (0-1)
   branchLength?: number; // Relative length of branches (0-1)
 };
@@ -245,15 +350,15 @@ export type LightningBolt = {
   branches: Point2D[][];
 };
 
-export function generateLightningWithBranches(
-  params: GenerateLightningWithBranchesParams
+export function genLightningWithBranches(
+  params: GenLightningWithBranchesParams
 ): LightningBolt {
   const { start, end, displacement = 50 } = params;
   const { branchProbability = 0.3, branchLength = 0.5 } = params;
   const { jaggedness = 0.5, seed = Math.random() } = params;
 
   // Generate main bolt
-  const mainBolt = generateLightningPath({
+  const mainBolt = genLightningPath({
     start,
     end,
     displacement,
@@ -295,7 +400,7 @@ export function generateLightningWithBranches(
           (dx * Math.sin(angle) + dy * Math.cos(angle)) * branchLength * 5,
       };
 
-      const branch = generateLightningPath({
+      const branch = genLightningPath({
         start: branchStart,
         end: branchEnd,
         displacement: displacement * branchLength * 0.7,

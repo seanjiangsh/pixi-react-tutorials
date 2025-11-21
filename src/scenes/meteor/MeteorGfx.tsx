@@ -1,14 +1,11 @@
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { extend, useTick } from "@pixi/react";
 import { Container } from "pixi.js";
 import { CustomEase } from "gsap/CustomEase";
 import { gsap } from "gsap";
 
 import { PointsBasedLayer, PathFillLayer } from "src/scenes/meteor/Layers";
-import {
-  generateCirclePath,
-  generateRoundedRectPath,
-} from "src/utils/graphics/path";
+import { genCirclePath, genRectPath } from "src/utils/graphics/path";
 import { genHSLTransitionColor } from "src/utils/graphics/misc";
 
 extend({ Container });
@@ -34,7 +31,7 @@ type MeteorGraphicsProps = {
   pathType?: PathType;
 };
 
-export function MeteorGraphics(props: MeteorGraphicsProps) {
+export function MeteorGfx(props: MeteorGraphicsProps) {
   const { width, height, startRatio = 1.1 } = props;
   const { baseBlur = 3, layers = 10 } = props;
   const { shrinkDuration = 2, pathType = "rect" } = props;
@@ -81,7 +78,7 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
 
   // Generate the FULL circle path once (memoized by width only)
   const circleFullPath = useMemo(() => {
-    return generateCirclePath({
+    return genCirclePath({
       radius: progressWidth * 0.4,
       segments: 100,
     });
@@ -103,18 +100,13 @@ export function MeteorGraphics(props: MeteorGraphicsProps) {
     const rectHeight =
       startRectHeight + (targetRectHeight - startRectHeight) * easedProgress;
 
-    return generateRoundedRectPath({
+    return genRectPath({
       width: rectWidth,
       height: rectHeight,
       radius: cornerRadius,
       segments: 500,
     });
   }, [easedProgress, width, startRatio, height]);
-
-  useEffect(() => {
-    if (animationProgress < 1) return;
-    console.log(roundedRectFullPath);
-  }, [animationProgress, roundedRectFullPath]);
 
   // Use path based on pathType prop
   const fullPath = pathType === "circle" ? circleFullPath : roundedRectFullPath;
