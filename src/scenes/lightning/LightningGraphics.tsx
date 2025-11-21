@@ -25,8 +25,6 @@ type LighteningGraphicsProps = {
   lineWidthVariation: number;
   boltColors: string[];
   glowDistance: number;
-  glowOuterStrength: number;
-  glowInnerStrength: number;
   oscillationCycle: number;
   regenerateKey: number;
   opacityVariation?: number;
@@ -37,7 +35,7 @@ export function LighteningGraphics(props: LighteningGraphicsProps) {
   const { segmentPoints, segmentDensity, envelopeShape, smoothingIterations } =
     props;
   const { lineWidth, lineWidthVariation, boltColors } = props;
-  const { glowDistance, glowOuterStrength, glowInnerStrength } = props;
+  const { glowDistance } = props;
   const { oscillationCycle, regenerateKey } = props;
   const { opacityVariation = 1 } = props;
 
@@ -298,12 +296,10 @@ export function LighteningGraphics(props: LighteningGraphicsProps) {
         (color) =>
           new GlowFilter({
             distance: glowDistance,
-            outerStrength: glowOuterStrength,
-            innerStrength: glowInnerStrength,
-            color: color,
+            color,
           })
       ),
-    [boltColorAssignments, glowDistance, glowOuterStrength, glowInnerStrength]
+    [boltColorAssignments, glowDistance]
   );
 
   // Draw function for each individual bolt

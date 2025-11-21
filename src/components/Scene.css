@@ -1,5 +1,6 @@
 .scene {
   margin-top: var(--header-height);
+  overflow: hidden;
 }
 
 .loading {

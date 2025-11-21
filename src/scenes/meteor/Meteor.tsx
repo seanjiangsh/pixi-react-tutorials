@@ -57,7 +57,7 @@ export default function Meteor({ containerRef }: SceneProps) {
       <Application
         width={width}
         height={height}
-        background={0x0a0e27}
+        background={"#0a0e27"}
         resizeTo={containerRef}
         antialias
       >
