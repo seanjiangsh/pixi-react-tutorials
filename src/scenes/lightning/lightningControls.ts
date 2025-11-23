@@ -61,6 +61,55 @@ export const borderBoltControls = {
   },
 };
 
+export const travelBoltControls = {
+  enableTravelBolt: {
+    value: true,
+    label: "Enable Travel Bolt",
+  },
+  boltCount: {
+    value: 3,
+    min: 1,
+    max: 5,
+    step: 1,
+    label: "Bolt Count",
+  },
+  displacement: {
+    value: 50,
+    min: 10,
+    max: 100,
+    step: 5,
+    label: "Displacement",
+  },
+  jaggedness: {
+    value: 0.5,
+    min: 0,
+    max: 1,
+    step: 0.1,
+    label: "Jaggedness",
+  },
+  branchProbability: {
+    value: 0.2,
+    min: 0,
+    max: 1,
+    step: 0.05,
+    label: "Branch Probability",
+  },
+  branchLength: {
+    value: 1,
+    min: 0.1,
+    max: 3,
+    step: 0.1,
+    label: "Branch Length",
+  },
+  travelDuration: {
+    value: 0.5,
+    min: 0.1,
+    max: 10,
+    step: 0.1,
+    label: "Travel Duration (s)",
+  },
+};
+
 export const lightningControls = {
   boltAmount: {
     value: 7,
