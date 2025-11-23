@@ -1,18 +1,13 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import useSceneSize from "src/utils/hooks/useSceneSize";
 import "./GridOverlay.css";
 
 type GridOverlayProps = {
   focusedCell: { col: number; row: number };
   onCellClick: (col: number, row: number) => void;
-  tiltMode: "flat" | "slope";
 };
 
-export function GridOverlay({
-  focusedCell,
-  onCellClick,
-  tiltMode,
-}: GridOverlayProps) {
+export function GridOverlay({ focusedCell, onCellClick }: GridOverlayProps) {
   const { width, height } = useSceneSize();
 
   // Calculate grid dimensions to make perfectly square cells
@@ -72,23 +67,39 @@ export function GridOverlay({
     return result;
   }, [cols, rows]);
 
+  // Check if focused cell is still valid when grid dimensions change
+  useEffect(() => {
+    if (focusedCell.col >= cols || focusedCell.row >= rows) {
+      onCellClick(0, 0);
+    }
+  }, [cols, rows, focusedCell.col, focusedCell.row, onCellClick]);
+
   return (
-    <div
-      className={`grid-overlay ${tiltMode}`}
-      style={{
-        gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
-        gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
-      }}
-    >
-      {cells.map(({ col, row }) => (
-        <div
-          key={`${col}-${row}`}
-          className={`grid-cell ${
-            col === focusedCell.col && row === focusedCell.row ? "focused" : ""
-          }`}
-          onClick={() => onCellClick(col, row)}
-        />
-      ))}
-    </div>
+    <>
+      <div
+        className="grid-overlay slope"
+        style={{
+          gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
+          gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
+        }}
+      >
+        {cells.map(({ col, row }) => (
+          <div
+            key={`${col}-${row}`}
+            className={`grid-cell ${
+              col === focusedCell.col && row === focusedCell.row
+                ? "focused"
+                : ""
+            }`}
+            onClick={() => onCellClick(col, row)}
+          />
+        ))}
+      </div>
+      {/* Hidden test points for border bolt corner detection */}
+      <div className="test-point" id="test-point-tl" />
+      <div className="test-point" id="test-point-tr" />
+      <div className="test-point" id="test-point-br" />
+      <div className="test-point" id="test-point-bl" />
+    </>
   );
 }

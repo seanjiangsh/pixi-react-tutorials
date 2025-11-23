@@ -35,12 +35,37 @@
     scale(1, 1);
 }
 
-.grid-overlay.flat {
-  animation: tilt-to-flat 1s cubic-bezier(0.47, 0, 0.05, 1) forwards;
+.grid-overlay.slope {
+  transform: translate3d(-0.15%, -8.4%, 0) perspective(8rem)
+    rotate3d(1, 0, 0, 4.7deg) scale(1.024, 0.745);
 }
 
-.grid-overlay.slope {
-  animation: tilt-to-slope 1s cubic-bezier(0.47, 0, 0.05, 1) forwards;
+.test-point {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+#test-point-tl {
+  top: 0;
+  left: 0;
+}
+
+#test-point-tr {
+  top: 0;
+  right: 0;
+}
+
+#test-point-br {
+  bottom: 0;
+  right: 0;
+}
+
+#test-point-bl {
+  bottom: 0;
+  left: 0;
 }
 
 .grid-cell {
@@ -48,6 +73,7 @@
   box-sizing: border-box;
   transition: all 0.2s ease;
   cursor: pointer;
+  position: relative;
 }
 
 .grid-cell.focused {

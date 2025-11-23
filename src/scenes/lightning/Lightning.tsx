@@ -17,17 +17,13 @@ export default function Lightning({ containerRef }: SceneProps) {
   const [regenerateKey, setRegenerateKey] = useState(0);
   const [focusedCell, setFocusedCell] = useState({ col: 0, row: 0 });
   const [showDemo, setShowDemo] = useState(false);
-  const [tiltMode, setTiltMode] = useState<"flat" | "slope">("flat");
 
-  const controls = useControls("Lightning", {
-    "Toggle Grid Tilt": button(() =>
-      setTiltMode((prev) => (prev === "flat" ? "slope" : "flat"))
-    ),
-    "Toggle bolts Demo": button(() => setShowDemo((prev) => !prev)),
+  const controls = useControls({
     "Border Bolt Controls": folder(borderBoltControls, { collapsed: true }),
     "Bolt Demo Controls": folder(
       {
         ...lightningControls,
+        "Toggle bolts Demo": button(() => setShowDemo((prev) => !prev)),
         Regenerate: button(() => setRegenerateKey((prev) => prev + 1)),
       },
       { collapsed: true }
@@ -40,7 +36,6 @@ export default function Lightning({ containerRef }: SceneProps) {
         <GridOverlay
           focusedCell={focusedCell}
           onCellClick={(col, row) => setFocusedCell({ col, row })}
-          tiltMode={tiltMode}
         />
         <Application
           width={width}
@@ -49,7 +44,7 @@ export default function Lightning({ containerRef }: SceneProps) {
           resizeTo={containerRef}
         >
           <BorderBoltGfx
-            tiltMode={tiltMode}
+            enableLightning={controls.enableLightning}
             jaggedAmplitude={controls.jaggedAmplitude}
             jaggedFrequency1={controls.jaggedFrequency1}
             jaggedFrequency2={controls.jaggedFrequency2}

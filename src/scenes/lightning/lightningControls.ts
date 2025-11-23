@@ -1,3 +1,66 @@
+export const borderBoltControls = {
+  enableLightning: {
+    value: true,
+    label: "Enable Lightning Effect",
+  },
+  jaggedAmplitude: {
+    value: 10,
+    min: 0,
+    max: 50,
+    step: 0.5,
+    label: "Jagged Amplitude",
+  },
+  jaggedFrequency1: {
+    value: 0.3,
+    min: 0.1,
+    max: 2,
+    step: 0.1,
+    label: "Frequency 1",
+  },
+  jaggedFrequency2: {
+    value: 0.7,
+    min: 0.1,
+    max: 2,
+    step: 0.1,
+    label: "Frequency 2",
+  },
+  jaggedFrequency3: {
+    value: 1.2,
+    min: 0.1,
+    max: 3,
+    step: 0.1,
+    label: "Frequency 3",
+  },
+  timeScale: {
+    value: 10,
+    min: 1,
+    max: 30,
+    step: 1,
+    label: "Time Scale",
+  },
+  randomness: {
+    value: 1,
+    min: 0,
+    max: 5,
+    step: 0.1,
+    label: "Randomness",
+  },
+  inset: {
+    value: 0,
+    min: 0,
+    max: 10,
+    step: 1,
+    label: "Inset",
+  },
+  borderRadius: {
+    value: 0,
+    min: 0,
+    max: 10,
+    step: 1,
+    label: "Border Radius",
+  },
+};
+
 export const lightningControls = {
   boltAmount: {
     value: 7,
@@ -94,64 +157,5 @@ export const lightningControls = {
     max: 5,
     step: 0.5,
     label: "Oscillation Cycle (s)",
-  },
-};
-
-export const borderBoltControls = {
-  jaggedAmplitude: {
-    value: 10,
-    min: 0,
-    max: 50,
-    step: 0.5,
-    label: "Jagged Amplitude",
-  },
-  jaggedFrequency1: {
-    value: 0.3,
-    min: 0.1,
-    max: 2,
-    step: 0.1,
-    label: "Frequency 1",
-  },
-  jaggedFrequency2: {
-    value: 0.7,
-    min: 0.1,
-    max: 2,
-    step: 0.1,
-    label: "Frequency 2",
-  },
-  jaggedFrequency3: {
-    value: 1.2,
-    min: 0.1,
-    max: 3,
-    step: 0.1,
-    label: "Frequency 3",
-  },
-  timeScale: {
-    value: 10,
-    min: 1,
-    max: 30,
-    step: 1,
-    label: "Time Scale",
-  },
-  randomness: {
-    value: 1,
-    min: 0,
-    max: 5,
-    step: 0.1,
-    label: "Randomness",
-  },
-  inset: {
-    value: 2,
-    min: 0,
-    max: 20,
-    step: 1,
-    label: "Inset",
-  },
-  borderRadius: {
-    value: 8,
-    min: 0,
-    max: 30,
-    step: 1,
-    label: "Border Radius",
   },
 };

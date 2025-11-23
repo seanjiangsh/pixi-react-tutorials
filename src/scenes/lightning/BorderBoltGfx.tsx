@@ -12,7 +12,7 @@ type BorderBoltGfxProps = {
   boltColor?: string;
   lineWidth?: number;
   glowDistance?: number;
-  tiltMode: "flat" | "slope";
+  enableLightning?: boolean;
   jaggedAmplitude?: number;
   jaggedFrequency1?: number;
   jaggedFrequency2?: number;
@@ -23,25 +23,26 @@ type BorderBoltGfxProps = {
   borderRadius?: number;
 };
 
-export function BorderBoltGfx({
-  boltColor = "#feff84",
-  lineWidth = 2,
-  glowDistance = 10,
-  tiltMode,
-  jaggedAmplitude = 3,
-  jaggedFrequency1 = 0.3,
-  jaggedFrequency2 = 0.7,
-  jaggedFrequency3 = 1.2,
-  timeScale = 10,
-  randomness = 0.5,
-  inset = 0,
-  borderRadius = 8,
-}: BorderBoltGfxProps) {
+export function BorderBoltGfx(props: BorderBoltGfxProps) {
+  const {
+    enableLightning = true,
+    boltColor = "#feff84",
+    lineWidth = 2,
+    glowDistance = 5,
+    jaggedAmplitude = 3,
+    jaggedFrequency1 = 0.3,
+    jaggedFrequency2 = 0.7,
+    jaggedFrequency3 = 1.2,
+    timeScale = 10,
+    randomness = 0.5,
+    inset = 0,
+    borderRadius = 8,
+  } = props;
+
   const [progress, setProgress] = useState(0);
   // Cache corners and only recalculate when needed
   const [cachedCorners, setCachedCorners] =
     useState<ReturnType<typeof getFocusedRectCorners>>(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Seeded random for consistent but varied jagged effect
   const seededRandom = useCallback((seed: number) => {
@@ -49,14 +50,10 @@ export function BorderBoltGfx({
     return x - Math.floor(x);
   }, []);
 
-  // Helper to get focused cell rect corners (accounting for transform)
-  const getFocusedRectCorners = useCallback(() => {
+  // Helper to mount corner divs and get their exact positions
+  const mountCornerDivsAndGetPositions = useCallback(() => {
     const focusedCell = document.querySelector(".grid-cell.focused");
     if (!focusedCell) {
-      return null;
-    }
-    const gridOverlay = document.querySelector(".grid-overlay");
-    if (!gridOverlay) {
       return null;
     }
 
@@ -66,31 +63,67 @@ export function BorderBoltGfx({
       return null;
     }
 
-    // Get the bounding rects
-    const rect = focusedCell.getBoundingClientRect();
     const canvasRect = canvas.getBoundingClientRect();
 
-    // Calculate the 4 corners relative to the canvas (Pixi.js coordinate system)
-    // These corners account for the CSS transform
+    // Remove any existing corner divs
+    const existingDivs = focusedCell.querySelectorAll(".corner-point");
+    existingDivs.forEach((div) => div.remove());
+
+    // Create 4 corner divs positioned at the corners of the focused cell
+    const cornerTL = document.createElement("div");
+    cornerTL.className = "corner-point";
+    cornerTL.style.cssText = `position: absolute; width: 1px; height: 1px; pointer-events: none; opacity: 0; top: ${inset}px; left: ${inset}px;`;
+
+    const cornerTR = document.createElement("div");
+    cornerTR.className = "corner-point";
+    cornerTR.style.cssText = `position: absolute; width: 1px; height: 1px; pointer-events: none; opacity: 0; top: ${inset}px; right: ${inset}px;`;
+
+    const cornerBR = document.createElement("div");
+    cornerBR.className = "corner-point";
+    cornerBR.style.cssText = `position: absolute; width: 1px; height: 1px; pointer-events: none; opacity: 0; bottom: ${inset}px; right: ${inset}px;`;
+
+    const cornerBL = document.createElement("div");
+    cornerBL.className = "corner-point";
+    cornerBL.style.cssText = `position: absolute; width: 1px; height: 1px; pointer-events: none; opacity: 0; bottom: ${inset}px; left: ${inset}px;`;
+
+    // Append to focused cell
+    focusedCell.appendChild(cornerTL);
+    focusedCell.appendChild(cornerTR);
+    focusedCell.appendChild(cornerBR);
+    focusedCell.appendChild(cornerBL);
+
+    // Force a reflow to ensure the divs are positioned
+    focusedCell.getBoundingClientRect();
+
+    // Get the transformed positions
+    const tlRect = cornerTL.getBoundingClientRect();
+    const trRect = cornerTR.getBoundingClientRect();
+    const brRect = cornerBR.getBoundingClientRect();
+    const blRect = cornerBL.getBoundingClientRect();
+
+    // Convert to canvas coordinates
     const topLeft = {
-      x: rect.left - canvasRect.left + inset,
-      y: rect.top - canvasRect.top + inset,
+      x: tlRect.left - canvasRect.left,
+      y: tlRect.top - canvasRect.top,
     };
     const topRight = {
-      x: rect.right - canvasRect.left - inset,
-      y: rect.top - canvasRect.top + inset,
+      x: trRect.left - canvasRect.left,
+      y: trRect.top - canvasRect.top,
     };
     const bottomRight = {
-      x: rect.right - canvasRect.left - inset,
-      y: rect.bottom - canvasRect.top - inset,
+      x: brRect.left - canvasRect.left,
+      y: brRect.top - canvasRect.top,
     };
     const bottomLeft = {
-      x: rect.left - canvasRect.left + inset,
-      y: rect.bottom - canvasRect.top - inset,
+      x: blRect.left - canvasRect.left,
+      y: blRect.top - canvasRect.top,
     };
 
     return { topLeft, topRight, bottomRight, bottomLeft };
   }, [inset]);
+
+  // Alias for clarity
+  const getFocusedRectCorners = mountCornerDivsAndGetPositions;
 
   const glowFilter = useMemo(
     () =>
@@ -103,20 +136,15 @@ export function BorderBoltGfx({
     [boltColor, glowDistance]
   );
 
-  // Handle tilt mode changes - enable transition mode during animation
+  // Handle window resize - recalculate corners when resizing
   useEffect(() => {
-    // Start transition
-    setIsTransitioning(true);
-    setCachedCorners(null);
-
-    const timer = setTimeout(() => {
-      // End transition after CSS animation completes
-      setIsTransitioning(false);
+    const handleResize = () => {
       setCachedCorners(getFocusedRectCorners());
-    }, 1100); // CSS animation duration + buffer
+    };
 
-    return () => clearTimeout(timer);
-  }, [tiltMode, inset, getFocusedRectCorners]);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [getFocusedRectCorners]);
 
   // Initial corners calculation and watch for focused cell changes
   useEffect(() => {
@@ -224,9 +252,14 @@ export function BorderBoltGfx({
         const displacement =
           baseDisplacement * (1 - randomness) + randomOffset * randomness;
 
+        // Apply jagged effect only if lightning is enabled
+        const jaggedOffset = enableLightning
+          ? displacement * jaggedAmplitude
+          : 0;
+
         return {
-          x: x + perpX * displacement * jaggedAmplitude,
-          y: y + perpY * displacement * jaggedAmplitude,
+          x: x + perpX * jaggedOffset,
+          y: y + perpY * jaggedOffset,
           tangent,
         };
       }
@@ -267,8 +300,8 @@ export function BorderBoltGfx({
   const draw = (g: Graphics) => {
     g.clear();
 
-    // Use cached corners, or get fresh ones during transition
-    const corners = isTransitioning ? getFocusedRectCorners() : cachedCorners;
+    // Use cached corners
+    const corners = cachedCorners;
     if (!corners) return;
 
     const pathSegment = getBorderPathSegment(corners, progress);
