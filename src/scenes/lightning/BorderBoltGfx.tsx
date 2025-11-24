@@ -21,6 +21,12 @@ type BorderBoltGfxProps = {
   randomness?: number;
   inset?: number;
   borderRadius?: number;
+  branchProbability?: number;
+  branchLength?: number;
+  startDelay?: number; // Delay in seconds before starting animation after touch
+  roundDuration?: number; // Duration in seconds for one complete round
+  growthDuration?: number; // Duration in seconds for length to grow from 0 to 50%
+  startPosition?: { x: number; y: number } | null; // Where the travel bolt touched
 };
 
 export function BorderBoltGfx(props: BorderBoltGfxProps) {
@@ -37,9 +43,17 @@ export function BorderBoltGfx(props: BorderBoltGfxProps) {
     randomness = 0.5,
     inset = 0,
     borderRadius = 8,
+    branchProbability = 0.1,
+    branchLength = 15,
+    startDelay = 0.3,
+    roundDuration = 1,
+    growthDuration = 0.5,
+    startPosition = null,
   } = props;
 
   const [progress, setProgress] = useState(0);
+  const [delayTimer, setDelayTimer] = useState(0);
+  const [growthTimer, setGrowthTimer] = useState(0);
   // Cache corners and only recalculate when needed
   const [cachedCorners, setCachedCorners] =
     useState<ReturnType<typeof getFocusedRectCorners>>(null);
@@ -146,6 +160,72 @@ export function BorderBoltGfx(props: BorderBoltGfxProps) {
     return () => window.removeEventListener("resize", handleResize);
   }, [getFocusedRectCorners]);
 
+  // Calculate initial progress based on startPosition
+  useEffect(() => {
+    if (!startPosition || !cachedCorners) {
+      return;
+    }
+
+    // Find the closest point on the border path to the startPosition
+    const { topLeft, topRight, bottomRight, bottomLeft } = cachedCorners;
+    const width = Math.sqrt(
+      Math.pow(topRight.x - topLeft.x, 2) + Math.pow(topRight.y - topLeft.y, 2)
+    );
+    const height = Math.sqrt(
+      Math.pow(bottomLeft.x - topLeft.x, 2) +
+        Math.pow(bottomLeft.y - topLeft.y, 2)
+    );
+
+    const borderPath = genRectPath({
+      width,
+      height,
+      radius: borderRadius,
+      segments: 200,
+      origin: { x: 0, y: 0 },
+    });
+
+    // Transform path points to match trapezoid
+    const transformedPath = borderPath.map((point) => {
+      const u = (point.x + width / 2) / width;
+      const v = (point.y + height / 2) / height;
+
+      const x =
+        topLeft.x * (1 - u) * (1 - v) +
+        topRight.x * u * (1 - v) +
+        bottomRight.x * u * v +
+        bottomLeft.x * (1 - u) * v;
+
+      const y =
+        topLeft.y * (1 - u) * (1 - v) +
+        topRight.y * u * (1 - v) +
+        bottomRight.y * u * v +
+        bottomLeft.y * (1 - u) * v;
+
+      return { x, y };
+    });
+
+    // Find closest point
+    let minDist = Infinity;
+    let closestIndex = 0;
+
+    transformedPath.forEach((point, index) => {
+      const dist = Math.sqrt(
+        Math.pow(point.x - startPosition.x, 2) +
+          Math.pow(point.y - startPosition.y, 2)
+      );
+      if (dist < minDist) {
+        minDist = dist;
+        closestIndex = index;
+      }
+    });
+
+    // Set initial progress to start at this position
+    const newInitialProgress = closestIndex / transformedPath.length;
+    setProgress(newInitialProgress);
+    setDelayTimer(0); // Reset delay timer
+    setGrowthTimer(0); // Reset growth timer
+  }, [startPosition, cachedCorners, borderRadius]);
+
   // Initial corners calculation and watch for focused cell changes
   useEffect(() => {
     // Use MutationObserver to watch for class changes on grid cells
@@ -177,10 +257,11 @@ export function BorderBoltGfx(props: BorderBoltGfxProps) {
     return () => observer.disconnect();
   }, [getFocusedRectCorners]);
 
-  // Get border path segment (50% of perimeter) using actual corners
+  // Get border path segment with dynamic length based on growth
   const getBorderPathSegment = (
     corners: ReturnType<typeof getFocusedRectCorners>,
-    progress: number
+    progress: number,
+    growthProgress: number
   ) => {
     if (!corners) return [];
 
@@ -272,8 +353,10 @@ export function BorderBoltGfx(props: BorderBoltGfxProps) {
     });
 
     const totalPoints = transformedPath.length;
-    const segmentLengthRatio = 0.5; // 50% of perimeter
-    const segmentLength = Math.floor(totalPoints * segmentLengthRatio);
+    // Gradually grow from 0 to 50% of perimeter based on growth progress
+    const targetLengthRatio = 0.5; // 50% of perimeter when fully grown
+    const currentLengthRatio = targetLengthRatio * growthProgress;
+    const segmentLength = Math.floor(totalPoints * currentLengthRatio);
 
     // progress is 0 to 1, representing position around the perimeter
     const startIndex = Math.floor(progress * totalPoints) % totalPoints;
@@ -289,22 +372,40 @@ export function BorderBoltGfx(props: BorderBoltGfxProps) {
   };
 
   const animate = useCallback(() => {
-    setProgress((prev) => {
-      const deltaSeconds = 1 / 60; // Frame-independent delta
-      return (prev + deltaSeconds) % 1;
-    });
-  }, []);
+    const deltaSeconds = 1 / 60; // Frame-independent delta
 
+    // Handle delay timer first
+    if (delayTimer < startDelay) {
+      setDelayTimer((prev) => prev + deltaSeconds);
+      return;
+    }
+
+    // Update growth timer
+    if (growthTimer < growthDuration) {
+      setGrowthTimer((prev) => Math.min(prev + deltaSeconds, growthDuration));
+    }
+
+    // Calculate progress speed based on round duration
+    const increment = deltaSeconds / roundDuration;
+
+    setProgress((prev) => (prev + increment) % 1);
+  }, [delayTimer, startDelay, growthTimer, growthDuration, roundDuration]);
   useTick(animate);
 
   const draw = (g: Graphics) => {
     g.clear();
 
+    // Don't draw during delay period
+    if (delayTimer < startDelay) return;
+
     // Use cached corners
     const corners = cachedCorners;
     if (!corners) return;
 
-    const pathSegment = getBorderPathSegment(corners, progress);
+    // Calculate growth progress (0 to 1)
+    const growthProgress = Math.min(growthTimer / growthDuration, 1);
+
+    const pathSegment = getBorderPathSegment(corners, progress, growthProgress);
 
     if (pathSegment.length < 2) return;
 
@@ -320,6 +421,62 @@ export function BorderBoltGfx(props: BorderBoltGfxProps) {
       g.lineTo(pathSegment[i].x, pathSegment[i].y);
     }
     g.stroke();
+
+    // Draw branches from random points along the path
+    if (branchProbability > 0 && branchLength > 0) {
+      for (let i = 0; i < pathSegment.length; i++) {
+        // Use seeded random for consistent branches - reduced probability
+        const shouldBranch =
+          seededRandom(i + progress * 1000) < branchProbability * 0.3;
+
+        if (shouldBranch && pathSegment[i].tangent) {
+          const point = pathSegment[i];
+          const tangent = point.tangent!;
+
+          // Calculate perpendicular direction
+          const tangentLength = Math.sqrt(
+            tangent.dx * tangent.dx + tangent.dy * tangent.dy
+          );
+          const perpX = -tangent.dy / tangentLength;
+          const perpY = tangent.dx / tangentLength;
+
+          // Random branch length variation
+          const lengthVariation = 0.5 + seededRandom(i + progress * 2000) * 0.2;
+          const actualLength = branchLength * lengthVariation;
+
+          // Random angle variation
+          const angleVariation =
+            (seededRandom(i + progress * 3000) - 0.5) * 0.5;
+          const cos = Math.cos(angleVariation);
+          const sin = Math.sin(angleVariation);
+          const rotatedPerpX = perpX * cos - perpY * sin;
+          const rotatedPerpY = perpX * sin + perpY * cos;
+
+          // Draw branch style
+          g.setStrokeStyle({
+            width: lineWidth * 0.8,
+            color: boltColor,
+            alpha: 0.7,
+          });
+
+          // Draw branch outward (positive direction)
+          g.moveTo(point.x, point.y);
+          g.lineTo(
+            point.x + rotatedPerpX * actualLength,
+            point.y + rotatedPerpY * actualLength
+          );
+          g.stroke();
+
+          // Draw branch inward (negative direction)
+          g.moveTo(point.x, point.y);
+          g.lineTo(
+            point.x - rotatedPerpX * actualLength,
+            point.y - rotatedPerpY * actualLength
+          );
+          g.stroke();
+        }
+      }
+    }
   };
 
   return <pixiGraphics draw={draw} filters={[glowFilter]} />;

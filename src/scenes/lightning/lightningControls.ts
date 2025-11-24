@@ -59,6 +59,48 @@ export const borderBoltControls = {
     step: 1,
     label: "Border Radius",
   },
+  lineWidth: {
+    value: 2,
+    min: 0.5,
+    max: 10,
+    step: 0.5,
+    label: "Line Width",
+  },
+  branchProbability: {
+    value: 0.1,
+    min: 0,
+    max: 1,
+    step: 0.05,
+    label: "Branch Probability",
+  },
+  branchLength: {
+    value: 5,
+    min: 5,
+    max: 50,
+    step: 5,
+    label: "Branch Length",
+  },
+  startDelay: {
+    value: 0.1,
+    min: 0,
+    max: 2,
+    step: 0.1,
+    label: "Start Delay (s)",
+  },
+  roundDuration: {
+    value: 1.5,
+    min: 0.1,
+    max: 3,
+    step: 0.1,
+    label: "Round Duration (s)",
+  },
+  growthDuration: {
+    value: 0.5,
+    min: 0.1,
+    max: 2,
+    step: 0.1,
+    label: "Growth Duration (s)",
+  },
 };
 
 export const travelBoltControls = {

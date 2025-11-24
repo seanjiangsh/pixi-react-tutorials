@@ -20,6 +20,7 @@ type LightningTravelGfxProps = {
   branchLength?: number;
   travelDuration?: number; // Duration in seconds for the bolt to travel
   seed?: number; // Seed for generating different bolt variations
+  onConnect?: (point: Point2D) => void; // Callback when bolt connects
 };
 
 export function LightningTravelGfx(props: LightningTravelGfxProps) {
@@ -35,6 +36,7 @@ export function LightningTravelGfx(props: LightningTravelGfxProps) {
     branchLength = 0.4,
     travelDuration = 0.5,
     seed = 0,
+    onConnect,
   } = props;
 
   const [progress, setProgress] = useState(0);
@@ -252,6 +254,15 @@ export function LightningTravelGfx(props: LightningTravelGfxProps) {
       }
       // Phase 2: Connection flash (30% - 35%) - Sudden bright
       else if (progress < brightPhase) {
+        // Trigger onConnect callback at the moment of connection (first frame only)
+        if (
+          progress >= connectPhase &&
+          progress < connectPhase + 0.01 &&
+          onConnect &&
+          main.length > 0
+        ) {
+          onConnect(main[main.length - 1]); // Report the end point
+        }
         mainPointsToDraw = main.length; // Fully connected
         alpha = 1; // Full brightness
         currentWidth = lineWidth * 1.5; // Thicker flash
@@ -327,7 +338,7 @@ export function LightningTravelGfx(props: LightningTravelGfxProps) {
         });
       }
     },
-    [boltData, progress, lineWidth, boltColor]
+    [boltData, progress, lineWidth, boltColor, onConnect]
   );
 
   return <pixiGraphics draw={draw} filters={[glowFilter]} />;
