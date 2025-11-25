@@ -15,9 +15,11 @@
     "gsap": "^3.13.0",
     "leva": "^0.10.1",
     "pixi-filters": "^6.1.4",
+    "pixi-stats": "^5.0.3",
     "pixi.js": "^8.14.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

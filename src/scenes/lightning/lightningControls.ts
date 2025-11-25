@@ -104,10 +104,6 @@ export const borderBoltControls = {
 };
 
 export const travelBoltControls = {
-  enableTravelBolt: {
-    value: true,
-    label: "Enable Travel Bolt",
-  },
   boltCount: {
     value: 3,
     min: 1,

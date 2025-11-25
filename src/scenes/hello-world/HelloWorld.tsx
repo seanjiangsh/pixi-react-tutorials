@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Application, extend } from "@pixi/react";
+import { extend } from "@pixi/react";
 import {
   Assets,
   Container,
@@ -10,8 +10,8 @@ import {
 } from "pixi.js";
 
 import useSceneSize from "src/utils/hooks/useSceneSize";
-import BluredText from "src/scenes/hello-world/BluredText";
 import { SceneProps } from "src/scenes/Scenes";
+import BluredText from "src/scenes/hello-world/BluredText";
 
 // extend tells @pixi/react what Pixi.js components are available
 extend({ Container, Sprite });
@@ -47,12 +47,14 @@ function BunnySprite({ x, y }: BunnySpriteProps) {
   );
 }
 
-export default function HelloWorld({ containerRef }: SceneProps) {
+export default function HelloWorld({ isPixi }: SceneProps) {
   const { width, height } = useSceneSize();
   const [spritePosition, setSpritePosition] = useState({
     x: width / 2,
     y: height / 2,
   });
+
+  if (!isPixi) return null;
   const containerHitArea = new Rectangle(0, 0, width, height);
   const bluredTextProps = {
     text: "Hello World",
@@ -67,20 +69,13 @@ export default function HelloWorld({ containerRef }: SceneProps) {
   };
 
   return (
-    <Application
-      width={width}
-      height={height}
-      background={"#1099bb"}
-      resizeTo={containerRef}
+    <pixiContainer
+      eventMode="static"
+      hitArea={containerHitArea}
+      onPointerMove={handlePointerMove}
     >
-      <pixiContainer
-        eventMode="static"
-        hitArea={containerHitArea}
-        onPointerMove={handlePointerMove}
-      >
-        <BunnySprite x={spritePosition.x} y={spritePosition.y} />
-        <BluredText {...bluredTextProps} />
-      </pixiContainer>
-    </Application>
+      <BunnySprite x={spritePosition.x} y={spritePosition.y} />
+      <BluredText {...bluredTextProps} />
+    </pixiContainer>
   );
 }
