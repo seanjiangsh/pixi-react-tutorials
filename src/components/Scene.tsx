@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
-import { Application, useApplication } from "@pixi/react";
+import { useEffect, useRef, useState } from "react";
+import { Application } from "@pixi/react";
 import { Stats } from "pixi-stats";
 import { useControls, Leva } from "leva";
+import type { Application as PixiApplication } from "pixi.js";
 
 import "src/components/Scene.css";
 import { Scenes, SceneName } from "src/scenes/Scenes";
@@ -11,12 +12,18 @@ type SceneProps = {
   sceneName: SceneName;
 };
 
-// Component inside Application to access the Pixi app
-function PixiStats({ showStats }: { showStats: boolean }) {
-  const { app } = useApplication();
+// Component inside Application to manage stats display
+type PixiStatsProps = {
+  showStats: boolean;
+  app: PixiApplication | null;
+};
+function PixiStats(props: PixiStatsProps) {
+  const { showStats, app } = props;
   const statsRef = useRef<Stats | null>(null);
 
   useEffect(() => {
+    if (!app) return;
+
     const cleanup = () => {
       if (!statsRef.current) return;
       statsRef.current.removeDomElement();
@@ -39,6 +46,7 @@ function PixiStats({ showStats }: { showStats: boolean }) {
 export default function Scene({ sceneName }: SceneProps) {
   const { width, height } = useSceneSize();
   const appRef = useRef<HTMLDivElement>(null);
+  const [pixiApp, setPixiApp] = useState<PixiApplication | null>(null);
   const SceneComponent = Scenes[sceneName];
 
   // Pixi Stats controls - use high order number to appear at the bottom
@@ -47,6 +55,13 @@ export default function Scene({ sceneName }: SceneProps) {
     { showStats: { value: true, label: "Show Stats" } },
     { collapsed: true, order: 9999 }
   );
+
+  // Configure Application initialization with 30 FPS and store app reference
+  const onInit = (app: PixiApplication) => {
+    app.ticker.maxFPS = 30;
+    app.ticker.minFPS = 30;
+    setPixiApp(app);
+  };
 
   return (
     <div className="scene" ref={appRef}>
@@ -62,8 +77,9 @@ export default function Scene({ sceneName }: SceneProps) {
         height={height}
         backgroundAlpha={0}
         resizeTo={appRef}
+        onInit={onInit}
       >
-        <PixiStats showStats={showStats} />
+        <PixiStats showStats={showStats} app={pixiApp} />
         <SceneComponent isPixi />
       </Application>
     </div>
