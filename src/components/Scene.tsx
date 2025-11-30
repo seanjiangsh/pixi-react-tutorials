@@ -59,7 +59,6 @@ export default function Scene({ sceneName }: SceneProps) {
   // Configure Application initialization with 30 FPS and store app reference
   const onInit = (app: PixiApplication) => {
     app.ticker.maxFPS = 30;
-    app.ticker.minFPS = 30;
     setPixiApp(app);
   };
 

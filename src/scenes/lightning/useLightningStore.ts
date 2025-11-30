@@ -1,4 +1,39 @@
 import { create } from "zustand";
+import {
+  borderBoltControls,
+  travelBoltControls,
+  lightningControls,
+} from "src/scenes/lightning/lightningControls";
+import type {
+  BorderBoltProps,
+  TravelBoltProps,
+  BoltDemoProps,
+} from "src/scenes/lightning/Lightning";
+
+// Helper to extract default values from control configs
+const getBorderBoltDefaults = (): Required<BorderBoltProps> =>
+  Object.fromEntries(
+    Object.entries(borderBoltControls).map(([key, config]) => [
+      key,
+      config.value,
+    ])
+  ) as Required<BorderBoltProps>;
+
+const getTravelBoltDefaults = (): Required<TravelBoltProps> =>
+  Object.fromEntries(
+    Object.entries(travelBoltControls).map(([key, config]) => [
+      key,
+      config.value,
+    ])
+  ) as Required<TravelBoltProps>;
+
+const getBoltDemoDefaults = (): Required<BoltDemoProps> =>
+  Object.fromEntries(
+    Object.entries(lightningControls).map(([key, config]) => [
+      key,
+      config.value,
+    ])
+  ) as Required<BoltDemoProps>;
 
 type LightningState = {
   focusedCell: { col: number; row: number };
@@ -7,6 +42,10 @@ type LightningState = {
   isBorderAnimating: boolean;
   showBoltDemo: boolean;
   regenerateKey: number;
+  // Control states
+  borderBoltControls: Required<BorderBoltProps>;
+  travelBoltControls: Required<TravelBoltProps>;
+  boltDemoControls: Required<BoltDemoProps>;
 };
 
 type LightningActions = {
@@ -17,6 +56,10 @@ type LightningActions = {
   handleBoltConnect: (point: { x: number; y: number }) => void;
   toggleBoltDemo: () => void;
   regenerate: () => void;
+  // Control actions
+  setBorderBoltControls: (controls: Partial<BorderBoltProps>) => void;
+  setTravelBoltControls: (controls: Partial<TravelBoltProps>) => void;
+  setBoltDemoControls: (controls: Partial<BoltDemoProps>) => void;
 };
 
 type LightningStore = LightningState & LightningActions;
@@ -29,6 +72,9 @@ export const useLightningStore = create<LightningStore>((set, get) => ({
   isBorderAnimating: true, // Start animating on initial load
   showBoltDemo: false,
   regenerateKey: 0,
+  borderBoltControls: getBorderBoltDefaults(),
+  travelBoltControls: getTravelBoltDefaults(),
+  boltDemoControls: getBoltDemoDefaults(),
 
   // Actions
   setFocusedCell: (cell) =>
@@ -65,4 +111,20 @@ export const useLightningStore = create<LightningStore>((set, get) => ({
 
   regenerate: () =>
     set((state) => ({ regenerateKey: state.regenerateKey + 1 })),
+
+  // Control actions
+  setBorderBoltControls: (controls) =>
+    set((state) => ({
+      borderBoltControls: { ...state.borderBoltControls, ...controls },
+    })),
+
+  setTravelBoltControls: (controls) =>
+    set((state) => ({
+      travelBoltControls: { ...state.travelBoltControls, ...controls },
+    })),
+
+  setBoltDemoControls: (controls) =>
+    set((state) => ({
+      boltDemoControls: { ...state.boltDemoControls, ...controls },
+    })),
 }));

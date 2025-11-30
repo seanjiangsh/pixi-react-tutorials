@@ -13,7 +13,7 @@ export default function Header(props: HeaderProps) {
 
   return (
     <header>
-      <h3>Pixi React</h3>
+      <h3>Scenes</h3>
       <SceneButtonList activeTheme={activeTheme} loadScene={loadScene} />
     </header>
   );

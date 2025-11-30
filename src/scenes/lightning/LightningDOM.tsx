@@ -1,28 +1,35 @@
 import { useControls, button } from "leva";
 
-import {
-  lightningControls,
-  borderBoltControls,
-  travelBoltControls,
-} from "src/scenes/lightning/lightningControls";
 import { GridOverlay } from "src/scenes/lightning/GridOverlay";
 import { useLightningStore } from "src/scenes/lightning/useLightningStore";
 
-export function LightningDOM() {
+const isStorybook = import.meta.env.VITE_IN_STORYBOOK === "true";
+
+type LightningDOMProps = {
+  onToggleBoltDemo?: () => void;
+  onRegenerate?: () => void;
+};
+
+export function LightningDOM(props: LightningDOMProps) {
+  const { onToggleBoltDemo: sbToggleBoltDemo, onRegenerate: sbRegenerate } =
+    props;
   const { focusedCell, handleCellClick, toggleBoltDemo, regenerate } =
     useLightningStore();
 
-  // Leva controls with proper ordering
-  useControls("Border Bolt", borderBoltControls, { collapsed: true, order: 1 });
-  useControls("Travel Bolt", travelBoltControls, { collapsed: true, order: 2 });
+  // Action buttons - only show in Leva when not in Storybook
   useControls(
-    "Bolt Demo",
+    "Actions",
     {
-      ...lightningControls,
-      "Toggle bolts Demo": button(() => toggleBoltDemo()),
-      Regenerate: button(() => regenerate()),
+      "Toggle Bolt Demo": button(() => {
+        toggleBoltDemo();
+        if (sbToggleBoltDemo) sbToggleBoltDemo();
+      }),
+      Regenerate: button(() => {
+        regenerate();
+        if (sbRegenerate) sbRegenerate();
+      }),
     },
-    { collapsed: true, order: 3 }
+    { order: 0, render: () => !isStorybook }
   );
 
   return (

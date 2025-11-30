@@ -27,11 +27,10 @@ function BunnySprite({ x, y }: BunnySpriteProps) {
 
   // Preload the sprite if it hasn't been loaded yet
   useEffect(() => {
-    if (texture === Texture.EMPTY) {
-      Assets.load("https://pixijs.com/assets/bunny.png").then((result) =>
-        setTexture(result)
-      );
-    }
+    if (texture !== Texture.EMPTY) return;
+    Assets.load("https://pixijs.com/assets/bunny.png").then((result) =>
+      setTexture(result)
+    );
   }, [texture]);
 
   return (
@@ -49,6 +48,7 @@ function BunnySprite({ x, y }: BunnySpriteProps) {
 
 export default function HelloWorld({ isPixi }: SceneProps) {
   const { width, height } = useSceneSize();
+
   const [spritePosition, setSpritePosition] = useState({
     x: width / 2,
     y: height / 2,
