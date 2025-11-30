@@ -13,5 +13,12 @@ const config: StorybookConfig = {
     ...config,
     VITE_IN_STORYBOOK: "true",
   }),
+  viteFinal: async (config) => {
+    // Set base path for GitHub Pages deployment
+    if (config.mode === "production") {
+      config.base = "/pixi-react-tutorials/storybook/";
+    }
+    return config;
+  },
 };
 export default config;

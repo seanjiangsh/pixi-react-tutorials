@@ -8,6 +8,9 @@ A collection of interactive visual effects and animations built with **Pixi.js**
 
   - **Hello World**: Interactive sprite animation with pointer tracking and blur effects
   - **Meteor**: Dynamic particle system with customizable path following, blur layers, and GSAP animations
+  - **Lightning**: Advanced lightning bolt effects with border animation, travel bolts, and procedural generation
+
+- **Storybook Integration**: Interactive component documentation with full control customization
 
 - **Advanced Graphics Utilities**:
 
@@ -29,10 +32,13 @@ A collection of interactive visual effects and animations built with **Pixi.js**
 - **pixi-filters** for visual effects
 - **Vite** for fast development and building
 - **Leva** for GUI controls
+- **Storybook 10** for component documentation and testing
+- **Zustand** for state management
 
-## Demo
+## 🌐 Demo
 
-[Live Demo](https://seanjiangsh.github.io/pixi-react-tutorials)
+- **[Live Demo](https://seanjiangsh.github.io/pixi-react-tutorials)** - Main application
+- **[Storybook](https://seanjiangsh.github.io/pixi-react-tutorials/storybook)** - Interactive component documentation
 
 ## 🚀 Getting Started
 
@@ -43,8 +49,14 @@ npm install
 # Start development server
 npm run dev
 
+# Start Storybook
+npm run sb
+
 # Build for production
 npm run build
+
+# Build both app and Storybook, deploy to GitHub Pages
+npm run deploy
 ```
 
 ## 📦 Project Structure
@@ -68,3 +80,5 @@ This project serves as a reference for:
 - Building reusable graphics utilities
 - Implementing parametric curve rendering
 - Managing complex visual effects with multiple layers
+- Setting up Storybook with Pixi.js components
+- Separating development and production control interfaces (Leva vs Storybook)
