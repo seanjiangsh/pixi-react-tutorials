@@ -65,10 +65,10 @@ export default function Scene({ sceneName }: SceneProps) {
   return (
     <div className="scene" ref={appRef}>
       {/* DOM elements */}
+      <Leva collapsed={true} theme={{ sizes: { rootWidth: "400px" } }} />
       <div className="scene-overlay">
         <SceneComponent />
         {/* Single Leva instance for all controls */}
-        <Leva collapsed={true} />
       </div>
       {/* Pixi elements rendered inside Application */}
       <Application

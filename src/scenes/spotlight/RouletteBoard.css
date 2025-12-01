@@ -1,0 +1,108 @@
+@keyframes tilt-to-slope {
+  from {
+    transform: translate3d(0, 0, 0) perspective(8.5rem) rotate3d(1, 0, 0, 0deg)
+      scale(1, 1);
+  }
+  to {
+    transform: translate3d(-0.15%, -8.4%, 0) perspective(8rem)
+      rotate3d(1, 0, 0, 4.7deg) scale(1.024, 0.745);
+  }
+}
+
+@keyframes tilt-to-flat {
+  from {
+    transform: translate3d(-0.15%, -8.4%, 0) perspective(8rem)
+      rotate3d(1, 0, 0, 4.7deg) scale(1.024, 0.745);
+  }
+  to {
+    transform: translate3d(0, 0, 0) perspective(8.5rem) rotate3d(1, 0, 0, 0deg)
+      scale(1, 1);
+  }
+}
+
+.roulette-board {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  pointer-events: none; /* Allow Pixi canvas to receive events underneath */
+  display: grid;
+  gap: 1px;
+  transform: translate(-50%, -50%) translate3d(0, 0, 0) perspective(8.5rem)
+    rotate3d(1, 0, 0, 0deg) scale(1, 1);
+}
+
+.roulette-board.slope {
+  transform: translate(-50%, -50%) translate3d(-0.15%, -8.4%, 0)
+    perspective(8rem) rotate3d(1, 0, 0, 4.7deg) scale(1.024, 0.745);
+}
+
+.test-point {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+#test-point-tl {
+  top: 0;
+  left: 0;
+}
+
+#test-point-tr {
+  top: 0;
+  right: 0;
+}
+
+#test-point-br {
+  bottom: 0;
+  right: 0;
+}
+
+#test-point-bl {
+  bottom: 0;
+  left: 0;
+}
+
+.roulette-cell {
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  user-select: none;
+  pointer-events: auto; /* Re-enable pointer events on cells */
+}
+
+.roulette-cell.green {
+  background-color: #27ae60;
+}
+
+.roulette-cell.red {
+  background-color: #e74c3c;
+}
+
+.roulette-cell.black {
+  background-color: #2c3e50;
+}
+
+.roulette-cell.focused {
+  border: 2px solid rgba(255, 215, 0, 0.9);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.roulette-number {
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.roulette-cell.zero-cell {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+}
