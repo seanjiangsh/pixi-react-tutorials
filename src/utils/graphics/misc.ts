@@ -26,8 +26,8 @@ export function genPointsByEquation(
     const tangent = { dx: next.x - p.x, dy: next.y - p.y };
 
     return {
-      x: Math.round(origin.x + p.x),
-      y: Math.round(origin.y + p.y),
+      x: origin.x + p.x,
+      y: origin.y + p.y,
       tangent,
     };
   });

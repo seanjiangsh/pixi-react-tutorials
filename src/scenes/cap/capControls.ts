@@ -27,9 +27,4 @@ export const capControls = {
     step: 0.1,
     label: "Range Multiplier (t)",
   },
-  color: {
-    value: "g",
-    options: ["g", "y", "r"],
-    label: "Color",
-  },
 };

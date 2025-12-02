@@ -48,8 +48,7 @@ export function CapPixi() {
     w: { ...capControls.w, value: SHORT_PRESET.w },
     m: { ...capControls.m, value: SHORT_PRESET.m },
     tRange: { ...capControls.tRange, value: SHORT_PRESET.tRange },
-    color: capControls.color,
-    "Toggle D 0/100": button(() => setDepthToggle((prev) => prev + 1)),
+    "Toggle Depth 0/100": button(() => setDepthToggle((prev) => prev + 1)),
     "Toggle Short/Long": button(() => setLongShortToggle((prev) => prev + 1)),
   }));
 
@@ -161,7 +160,6 @@ export function CapPixi() {
         w={controls.w}
         m={controls.m}
         tRange={controls.tRange}
-        color={controls.color}
       />
     </pixiContainer>
   );
