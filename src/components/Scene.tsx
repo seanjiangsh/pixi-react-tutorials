@@ -77,6 +77,9 @@ export default function Scene({ sceneName }: SceneProps) {
         backgroundAlpha={0}
         resizeTo={appRef}
         onInit={onInit}
+        antialias
+        // resolution={Math.max(Math.min(window.devicePixelRatio, 2), 1)}
+        // autoDensity
       >
         <PixiStats showStats={showStats} app={pixiApp} />
         <SceneComponent isPixi />
