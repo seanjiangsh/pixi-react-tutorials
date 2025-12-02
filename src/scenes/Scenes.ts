@@ -3,6 +3,7 @@ import CountDown from "src/scenes/count-down/CountDown";
 import Meteor from "src/scenes/meteor/Meteor";
 import Lightning from "src/scenes/lightning/Lightning";
 import Spotlight from "src/scenes/spotlight/Spotlight";
+import Cap from "src/scenes/cap/Cap";
 
 export const Scenes = {
   "Hello World": HelloWorld,
@@ -10,6 +11,7 @@ export const Scenes = {
   Meteor: Meteor,
   Lightning: Lightning,
   Spotlight: Spotlight,
+  Cap: Cap,
 };
 
 export type SceneName = keyof typeof Scenes;
