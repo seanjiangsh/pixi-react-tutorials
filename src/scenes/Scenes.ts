@@ -6,8 +6,8 @@ import Spotlight from "src/scenes/spotlight/Spotlight";
 import Cap from "src/scenes/cap/Cap";
 
 export const Scenes = {
-  "Hello World": HelloWorld,
-  // "Count Down": CountDown,
+  "Hello-World": HelloWorld,
+  // "Count-Down": CountDown,
   Meteor: Meteor,
   Lightning: Lightning,
   Spotlight: Spotlight,

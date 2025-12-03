@@ -1,26 +1,29 @@
-import { Scenes, type SceneName } from "src/scenes/Scenes";
+import { Link, useLocation } from "react-router-dom";
+import { Scenes } from "src/scenes/Scenes";
 import "src/components/SceneButtonList.css";
 
-type SceneButtonListProps = {
-  activeTheme: SceneName | null;
-  loadScene: (sceneName: SceneName) => void;
-};
-
-export default function SceneButtonList(props: SceneButtonListProps) {
-  const { activeTheme, loadScene } = props;
+export default function SceneButtonList() {
+  const location = useLocation();
 
   return (
     <div className="button-list">
-      {Object.entries(Scenes).map(([SceneName]) => (
-        <button
-          key={SceneName}
-          onClick={() => loadScene(SceneName as SceneName)}
-          className={activeTheme === SceneName ? "active" : ""}
-          disabled={activeTheme === SceneName}
-        >
-          {SceneName}
-        </button>
-      ))}
+      {Object.keys(Scenes).map((sceneName) => {
+        const path = `/${sceneName.toLowerCase()}`;
+        const isActive = location.pathname === path;
+
+        return (
+          <Link
+            key={sceneName}
+            to={path}
+            className={isActive ? "active" : ""}
+            style={{ textDecoration: "none" }}
+          >
+            <button className={isActive ? "active" : ""} disabled={isActive}>
+              {sceneName}
+            </button>
+          </Link>
+        );
+      })}
     </div>
   );
 }
