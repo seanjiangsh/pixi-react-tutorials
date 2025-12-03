@@ -8,8 +8,8 @@ import { CapGfx } from "src/scenes/cap/CapGfx";
 import { capControls } from "src/scenes/cap/capControls";
 
 // Short and long presets
-const SHORT_PRESET = { D: 100, w: 100, m: 1.5, tRange: 3.5 };
-const LONG_PRESET = { D: 100, w: 540, m: 14.5, tRange: 2.2 };
+const SHORT_PRESET = { D: 100, w: 100, m: 1.5 };
+const LONG_PRESET = { D: 100, w: 500, m: 6 };
 
 export function CapPixi() {
   const { width, height } = useSceneSize();
@@ -40,14 +40,12 @@ export function CapPixi() {
     D: SHORT_PRESET.D,
     w: SHORT_PRESET.w,
     m: SHORT_PRESET.m,
-    tRange: SHORT_PRESET.tRange,
   });
 
   const [controls, set] = useControls("Cap", () => ({
     D: { ...capControls.D, value: SHORT_PRESET.D },
     w: { ...capControls.w, value: SHORT_PRESET.w },
     m: { ...capControls.m, value: SHORT_PRESET.m },
-    tRange: { ...capControls.tRange, value: SHORT_PRESET.tRange },
     "Toggle Depth 0/100": button(() => setDepthToggle((prev) => prev + 1)),
     "Toggle Short/Long": button(() => setLongShortToggle((prev) => prev + 1)),
   }));
@@ -86,14 +84,12 @@ export function CapPixi() {
       if (
         controls.D !== last.D ||
         controls.w !== last.w ||
-        controls.m !== last.m ||
-        controls.tRange !== last.tRange
+        controls.m !== last.m
       ) {
         // Update last values
         last.D = controls.D;
         last.w = controls.w;
         last.m = controls.m;
-        last.tRange = controls.tRange;
       }
       return;
     }
@@ -130,10 +126,6 @@ export function CapPixi() {
         m:
           state.startParams.m +
           (state.targetParams.m - state.startParams.m) * easedProgress,
-        tRange:
-          state.startParams.tRange +
-          (state.targetParams.tRange - state.startParams.tRange) *
-            easedProgress,
       };
 
       // Update Leva controls to reflect animated values
@@ -141,7 +133,6 @@ export function CapPixi() {
         D: newParams.D,
         w: newParams.w,
         m: newParams.m,
-        tRange: newParams.tRange,
       });
 
       // Update last values
@@ -155,12 +146,7 @@ export function CapPixi() {
 
   return (
     <pixiContainer x={width / 2} y={height / 2}>
-      <CapGfx
-        D={controls.D}
-        w={controls.w}
-        m={controls.m}
-        tRange={controls.tRange}
-      />
+      <CapGfx D={controls.D} w={controls.w} m={controls.m} />
     </pixiContainer>
   );
 }

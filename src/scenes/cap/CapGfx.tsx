@@ -10,13 +10,17 @@ type CapGfxProps = {
   D: number;
   w: number;
   m: number;
-  tRange: number;
+  yThreshold?: number; // Threshold for y value to stop (default: D * 0.01)
 };
 
-export function CapGfx({ D, w, m, tRange }: CapGfxProps) {
+export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
   // Generate cap path using parametric equations
   const capPath = useMemo(() => {
-    const range = w * tRange;
+    // Find the t value where y drops below threshold
+    // y(t) = D * e^(- (t^2/w^2)^m) < yThreshold
+    // Solve for t: t = w * ((-ln(yThreshold/D))^(1/m))^(1/2)
+    const threshold = yThreshold || D * 0.01;
+    const range = 2 * w * Math.pow(-Math.log(threshold / D), 1 / (2 * m));
 
     // Generate cap curve using parametric equation
     // x(t) = t
@@ -43,7 +47,7 @@ export function CapGfx({ D, w, m, tRange }: CapGfxProps) {
     ];
 
     return closedPath;
-  }, [D, w, m, tRange]);
+  }, [D, w, m, yThreshold]);
 
   const drawCapFill = useCallback(
     (g: Graphics) => {
