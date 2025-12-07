@@ -39,8 +39,6 @@
 
 ---
 
----
-
 # 📊 **Pixi.js Animation Cost Table**
 
 | Feature / Technique                     | Cost     | Animation Impact | Recommended?           | Notes                            |
@@ -61,5 +59,95 @@
 | **Tint change**                         | 😊       | Very low         | ✔✔ Safe                | Uniform change only              |
 | **Mesh animation (<20 vertices)**       | 😊       | Low              | ✔ Good                 | Avoid large meshes               |
 | **ParticleContainer**                   | 😊       | Very low         | ✔ Best for particles   | Hardware-accelerated batching    |
+
+---
+
+# 🧮 Computational Cost of Common Math Operations (for Graphics)
+
+When designing equations for animations or procedural graphics (Pixi.js, shaders, particle systems), the **computational cost** of each math operation matters.
+Some operations are extremely fast, while others are noticeably expensive when evaluated thousands of times per frame.
+
+Below is a cost ranking you can use when deciding which math form to use.
+
+---
+
+## **Cost Ranking of Operations (Cheap → Expensive)**
+
+In general graphics pipelines (Pixi.js, JS, GLSL-like thinking):
+
+$$
+\text{addition/subtraction } (+,-)
+\;<\;
+\text{multiplication } (\times)
+\;<\;
+\text{division } (/)
+\;<\;
+\sqrt{x}
+\;<\;
+x^m
+\;<\;
+e^x
+$$
+
+---
+
+## **Operation Cost Table**
+
+| Operation      | Example       | Relative Cost               | Notes                     |
+| -------------- | ------------- | --------------------------- | ------------------------- |
+| Add / Subtract | $a + b$       | 😊 (very cheap)             | Fastest operations        |
+| Multiply       | $a \cdot b$   | 😊 (very cheap)             | Nearly same as add        |
+| Divide         | $\frac{a}{b}$ | 🔥🔥                        | Slightly slower           |
+| Square Root    | $\sqrt{x}$    | 🔥🔥🔥                      | More work than divide     |
+| Power          | $x^m$         | 🔥🔥🔥🔥                    | Cheaper if $m$ is integer |
+| Exponential    | $e^x$         | 🔥🔥🔥🔥🔥 (most expensive) | Always slowest            |
+
+---
+
+## **Why This Matters (Pixi / Animation / Realtime)**
+
+If your graphic or animation evaluates an equation like
+
+$$
+y = e^{-x^2}
+$$
+
+for **1,000 points per frame**, at **60 FPS**, that's **60,000 exponential evaluations** per second — costly.
+
+A cheaper approximation might be:
+
+$$
+y = \frac{1}{1+x^2}
+$$
+
+Same general bell shape, but with only:
+
+- multiplication
+- division
+- addition
+
+→ **extremely fast**.
+
+---
+
+## **Rule of Thumb for Pixi.js**
+
+Use this principle:
+
+> **If many points require the same function each frame → avoid `e^x` and non-integer powers.**
+
+Prefer:
+
+- $x^2$
+- $x^3$
+- $\frac{1}{1+x^2}$
+- polynomial or rational functions
+
+Avoid:
+
+- $e^x$
+- $\ln x$
+- $x^{0.73}$ (non-integer powers)
+- nested power/exponential expressions
 
 ---
