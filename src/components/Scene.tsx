@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Application } from "@pixi/react";
 import { Stats } from "pixi-stats";
-import { useControls, Leva } from "leva";
+import { Leva } from "leva";
 import type { Application as PixiApplication } from "pixi.js";
 
 import "src/components/Scene.css";
 import { Scenes, SceneName } from "src/scenes/Scenes";
 import useSceneSize from "src/utils/hooks/useSceneSize";
+import { useSceneStore } from "src/stores/useSceneStore";
 
 type SceneProps = {
   sceneName: SceneName;
@@ -48,13 +49,7 @@ export default function Scene({ sceneName }: SceneProps) {
   const appRef = useRef<HTMLDivElement>(null);
   const [pixiApp, setPixiApp] = useState<PixiApplication | null>(null);
   const SceneComponent = Scenes[sceneName];
-
-  // Pixi Stats controls - use high order number to appear at the bottom
-  const { showStats } = useControls(
-    "Pixi Stats",
-    { showStats: { value: true, label: "Show Stats" } },
-    { collapsed: true, order: 9999 }
-  );
+  const { showPixiStats } = useSceneStore();
 
   // Configure Application initialization with 30 FPS and store app reference
   const onInit = (app: PixiApplication) => {
@@ -81,7 +76,7 @@ export default function Scene({ sceneName }: SceneProps) {
         // resolution={Math.max(Math.min(window.devicePixelRatio, 2), 1)}
         // autoDensity
       >
-        <PixiStats showStats={showStats} app={pixiApp} />
+        <PixiStats showStats={showPixiStats} app={pixiApp} />
         <SceneComponent isPixi />
       </Application>
     </div>

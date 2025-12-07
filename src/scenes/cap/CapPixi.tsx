@@ -42,7 +42,7 @@ export function CapPixi() {
     m: SHORT_PRESET.m,
   });
 
-  const [controls, set] = useControls("Cap", () => ({
+  const [controls, set] = useControls("Controls", () => ({
     D: { ...capControls.D, value: SHORT_PRESET.D },
     w: { ...capControls.w, value: SHORT_PRESET.w },
     m: { ...capControls.m, value: SHORT_PRESET.m },

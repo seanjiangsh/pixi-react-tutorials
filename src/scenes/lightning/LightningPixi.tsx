@@ -34,7 +34,7 @@ export function LightningPixi() {
 
   // Leva controls - update store when they change
   useControls(
-    "Border Bolt",
+    "Controls.Border Bolt",
     {
       enableLightning: {
         ...borderBoltControls.enableLightning,
@@ -117,7 +117,7 @@ export function LightningPixi() {
   );
 
   useControls(
-    "Travel Bolt",
+    "Controls.Travel Bolt",
     {
       boltCount: {
         ...travelBoltControls.boltCount,
@@ -155,7 +155,7 @@ export function LightningPixi() {
   );
 
   useControls(
-    "Bolt Demo",
+    "Controls.Bolt Demo",
     {
       boltAmount: {
         ...lightningControls.boltAmount,

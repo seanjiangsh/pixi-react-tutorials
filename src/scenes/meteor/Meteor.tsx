@@ -33,7 +33,7 @@ export default function Meteor(props: MeteorProps) {
   const { resetKey, resetAnimation } = useMeteorStore();
 
   const controls = useControls(
-    "Meteor",
+    "Controls",
     {
       pathType: {
         value: pathTypeProp ?? "rect",

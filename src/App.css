@@ -15,7 +15,3 @@ body {
   overflow: hidden;
   margin: 0;
 }
-
-:root {
-  --header-height: 3.5rem;
-}

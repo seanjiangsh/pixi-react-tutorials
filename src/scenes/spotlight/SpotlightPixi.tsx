@@ -25,7 +25,7 @@ export function SpotlightPixi() {
 
   // Debug controls
   useControls(
-    "Debug",
+    "Controls.Debug",
     {
       showDimming: {
         ...debugControls.showDimming,
@@ -49,7 +49,7 @@ export function SpotlightPixi() {
 
   // Spotlight controls
   useControls(
-    "Spotlight",
+    "Controls.Spotlight",
     {
       spotlightCount: {
         ...spotlightControls.spotlightCount,
@@ -88,7 +88,7 @@ export function SpotlightPixi() {
 
   // Animation controls
   useControls(
-    "Animation",
+    "Controls.Animation",
     {
       autoAdvance: {
         ...animationControls.autoAdvance,
