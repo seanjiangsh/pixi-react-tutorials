@@ -15,7 +15,7 @@ import {
   type AnimationPhase,
 } from "./physics";
 import { DimmingLayer } from "./DimmingLayer";
-import { SpotlightLayer } from "./Gfx/SpotlightLayer";
+import { SpotlightLayer } from "./SpotlightLayer";
 
 type AnimationControls = {
   autoAdvance: boolean;

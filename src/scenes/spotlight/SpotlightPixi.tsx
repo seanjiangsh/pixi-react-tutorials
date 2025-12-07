@@ -1,6 +1,6 @@
 import { useControls } from "leva";
 
-import { SpotlightGfx } from "src/scenes/spotlight/SpotlightGfx";
+import { SpotlightGfx } from "src/scenes/spotlight/Gfx/SpotlightGfx";
 import {
   debugControls,
   spotlightControls,
