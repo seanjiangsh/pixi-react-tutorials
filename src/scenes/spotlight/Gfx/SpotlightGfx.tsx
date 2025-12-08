@@ -15,11 +15,11 @@ import {
   type AnimationPhase,
 } from "./physics";
 import { DimmingLayer } from "./DimmingLayer";
+import { CellRevealLayer } from "./CellRevealLayer";
 import { SpotlightLayer } from "./SpotlightLayer";
 
 type AnimationControls = {
   autoAdvance: boolean;
-  focusDuration: number;
   expandDuration: number;
   expandPause: number;
   velocityWeight: number;
@@ -53,7 +53,6 @@ export function SpotlightGfx(props: SpotlightGfxProps) {
     focusedCells = [],
     animationControls = {
       autoAdvance: true,
-      focusDuration: 1.0,
       expandDuration: 0.8,
       expandPause: 0.3,
       velocityWeight: 50,
@@ -78,6 +77,7 @@ export function SpotlightGfx(props: SpotlightGfxProps) {
   const phaseStartTimeRef = useRef<number>(0);
   const [assignedCells, setAssignedCells] = useState<number[]>([]);
   const [expandingStartTime, setExpandingStartTime] = useState<number>(0);
+  const [focusStartTime, setFocusStartTime] = useState<number>(0);
 
   // Initialize spotlights
   useEffect(() => {
@@ -105,6 +105,10 @@ export function SpotlightGfx(props: SpotlightGfxProps) {
         )
       );
     }
+    // Set focus start time when entering focusing phase
+    if (animationPhase === "focusing") {
+      setFocusStartTime(Date.now());
+    }
     // Reset expanding timer when phase changes away from expanding
     if (animationPhase !== "expanding") {
       setExpandingStartTime(0);
@@ -123,7 +127,6 @@ export function SpotlightGfx(props: SpotlightGfxProps) {
     if (width === 0 || height === 0 || !boardBounds) return;
 
     const deltaTime = ticker.deltaTime / 60; // Convert to seconds
-
     // Initialize expanding phase timer synchronously when phase changes
     if (animationPhase === "expanding" && expandingStartTime === 0) {
       setExpandingStartTime(Date.now());
@@ -133,12 +136,6 @@ export function SpotlightGfx(props: SpotlightGfxProps) {
     const currentElapsedTime = (Date.now() - phaseStartTimeRef.current) / 1000;
     if (animationControls.autoAdvance && onPhaseComplete) {
       if (
-        animationPhase === "focusing" &&
-        currentElapsedTime > animationControls.focusDuration
-      ) {
-        onPhaseComplete();
-        return;
-      } else if (
         animationPhase === "expanding" &&
         currentElapsedTime >
           animationControls.expandPause + animationControls.expandDuration
@@ -157,6 +154,28 @@ export function SpotlightGfx(props: SpotlightGfxProps) {
         animationControls.velocityWeight
       );
       setAssignedCells(newAssignments);
+
+      // Check if all spotlights have reached their targets
+      const threshold = 5; // pixels
+      const allReached = spotlights.every((spotlight, index) => {
+        const cellIndex = newAssignments[index];
+        if (cellIndex === undefined) return false;
+
+        const cellCorners = cellCornersCache.get(cellIndex);
+        if (!cellCorners) return false;
+
+        const dx = cellCorners.center.x - spotlight.position.x;
+        const dy = cellCorners.center.y - spotlight.position.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        return distance < threshold;
+      });
+
+      // Auto-advance to expanding phase when all spotlights reach their targets
+      if (allReached && onPhaseComplete) {
+        onPhaseComplete();
+        return;
+      }
     }
 
     // Clone spotlights array before mutating
@@ -199,6 +218,13 @@ export function SpotlightGfx(props: SpotlightGfxProps) {
         showDimming={showDimming}
         boardBounds={boardBounds}
         opacity={dimmingOpacity}
+      />
+      <CellRevealLayer
+        showDimming={showDimming}
+        animationPhase={animationPhase}
+        assignedCells={assignedCells}
+        cellCornersCache={cellCornersCache}
+        focusStartTime={focusStartTime}
       />
       <SpotlightLayer
         showDimming={showDimming}

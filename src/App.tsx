@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import "src/App.css";
 
 import { Scenes } from "src/scenes/Scenes";
@@ -10,7 +10,6 @@ export default function App() {
     <>
       <GlobalControls />
       <Routes>
-        <Route path="/" element={<Navigate to="/cap" replace />} />
         {Object.keys(Scenes).map((sceneName) => (
           <Route
             key={sceneName}

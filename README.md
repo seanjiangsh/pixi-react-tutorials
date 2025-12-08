@@ -63,7 +63,7 @@ npm run deploy
 
 ```
 src/
-├── components/      # UI components (Header, Scene, SceneButtonList)
+├── components/      # UI components (Scene, SceneButtonList)
 ├── scenes/          # Individual scene implementations
 ├── utils/
 │   ├── graphics/   # Graphics utilities (path generation, drawing helpers)

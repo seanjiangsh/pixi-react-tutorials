@@ -95,11 +95,6 @@ export function SpotlightPixi() {
         value: storeAnimationControls.autoAdvance,
         onChange: (v) => setAnimationControls({ autoAdvance: v }),
       },
-      focusDuration: {
-        ...animationControls.focusDuration,
-        value: storeAnimationControls.focusDuration,
-        onChange: (v) => setAnimationControls({ focusDuration: v }),
-      },
       expandDuration: {
         ...animationControls.expandDuration,
         value: storeAnimationControls.expandDuration,

@@ -20,7 +20,7 @@ export const debugControls = {
 // Spotlight controls
 export const spotlightControls = {
   spotlightCount: {
-    value: 2,
+    value: 1,
     min: 1,
     max: 5,
     step: 1,
@@ -69,13 +69,6 @@ export const animationControls = {
     value: true,
     label: "Auto Advance Phases",
   },
-  focusDuration: {
-    value: 1.0,
-    min: 0.5,
-    max: 3.0,
-    step: 0.1,
-    label: "Focus Duration (s)",
-  },
   expandDuration: {
     value: 0.8,
     min: 0.3,
@@ -116,7 +109,6 @@ export type SpotlightProps = {
 
 export type AnimationProps = {
   autoAdvance: boolean;
-  focusDuration: number;
   expandDuration: number;
   expandPause: number;
   velocityWeight: number;
