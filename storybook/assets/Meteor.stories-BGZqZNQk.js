@@ -1,4 +1,4 @@
-import{f as gn,d as yn,g as xn,h as vn,k as Ar,i as ii,j as Tn,l as bn,u as wn,P as Sn}from"./useSceneSize-D8MHsYII.js";import{j as bt}from"./jsx-runtime-D_zvdyIk.js";import{w as Pn,v as On,a as zr,f as Cn,d as kn,h as Mn,c as Dn,u as Rn,b as An}from"./path-hWuadDL6.js";import{r as Q}from"./iframe--upQc8V5.js";import"./preload-helper-Dp1pzeXC.js";import"./index-bIrdOc7G.js";import"./client-PKV4buGr.js";var zn=`
+import{f as gn,d as yn,g as xn,h as vn,k as Ar,i as ii,j as Tn,l as bn,u as wn,P as Sn}from"./useSceneSize-SiD43lqd.js";import{j as bt}from"./jsx-runtime-D_zvdyIk.js";import{w as Pn,v as On,a as zr,f as Cn,d as kn,h as Mn,c as Dn,u as Rn,b as An}from"./path-O26f4Owf.js";import{r as Q}from"./iframe-DDes9wYd.js";import"./preload-helper-Dp1pzeXC.js";import"./index-CgwWpNGd.js";import"./client-BmZBhEFI.js";var zn=`
 in vec2 vTextureCoord;
 out vec4 finalColor;
 
