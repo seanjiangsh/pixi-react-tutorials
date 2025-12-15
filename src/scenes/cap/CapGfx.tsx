@@ -15,6 +15,16 @@ type CapGfxProps = {
 
 export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
   // Generate cap path using parametric equations
+  // console.log(
+  //   "Rendering CapGfx with D:",
+  //   D,
+  //   "w:",
+  //   w,
+  //   "m:",
+  //   m,
+  //   "yThreshold:",
+  //   yThreshold
+  // );
   const capPath = useMemo(() => {
     // Find the t value where y drops below threshold
     // y(t) = D * e^(- (t^2/w^2)^m) < yThreshold
@@ -33,6 +43,7 @@ export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
       tStart: -range / 2,
       tEnd: range / 2,
       segments: 200,
+      cacheKey: [D, w, m], // Include closure variables for proper caching
     });
 
     // Close the path by adding bottom points

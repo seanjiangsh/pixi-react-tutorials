@@ -1,11 +1,12 @@
 import { type Point2D } from "src/types/types";
 import { type GeneratedPoints } from "src/utils/graphics/misc";
 import { genPointsByEquation } from "src/utils/graphics/misc";
+import { memoize } from "./memoize";
 
 // Utility functions for path calculations
 
-// Generate a circular path
-export function genCirclePath(params: {
+// Internal non-memoized implementation
+function genCirclePathImpl(params: {
   radius: number;
   segments?: number;
   origin?: Point2D;
@@ -25,6 +26,17 @@ export function genCirclePath(params: {
   });
 }
 
+/**
+ * Generate a circular path with memoization
+ * Cached based on radius, segments, and origin
+ * Uses precision=1 for animations
+ */
+export const genCirclePath = memoize(genCirclePathImpl, {
+  maxSize: 50,
+  maxAge: 60000,
+  precision: 1,
+});
+
 // Generate a rectangle path with optional individual corner radius
 type GenRectPathParams = {
   width: number;
@@ -40,7 +52,9 @@ type GenRectPathParams = {
   segments?: number;
   origin?: Point2D;
 };
-export function genRectPath(params: GenRectPathParams): GeneratedPoints {
+
+// Internal non-memoized implementation
+function genRectPathImpl(params: GenRectPathParams): GeneratedPoints {
   const {
     width,
     height,
@@ -253,6 +267,17 @@ export function genRectPath(params: GenRectPathParams): GeneratedPoints {
   });
 }
 
+/**
+ * Generate a rectangle path with optional rounded corners and memoization
+ * Cached based on width, height, radius, segments, and origin
+ * Uses precision=1 for animations
+ */
+export const genRectPath = memoize(genRectPathImpl, {
+  maxSize: 50,
+  maxAge: 60000,
+  precision: 1,
+});
+
 // Generate a lightning bolt path
 type GenLightningPathParams = {
   start: Point2D;
@@ -265,7 +290,8 @@ type GenLightningPathParams = {
   smoothingIterations?: number; // Number of smoothing passes (overrides jaggedness)
 };
 
-export function genLightningPath(params: GenLightningPathParams): Point2D[] {
+// Internal non-memoized implementation
+function genLightningPathImpl(params: GenLightningPathParams): Point2D[] {
   const { start, end } = params;
   const { displacement = 50, jaggedness = 0.5, seed = Math.random() } = params;
   const {
@@ -339,6 +365,18 @@ export function genLightningPath(params: GenLightningPathParams): Point2D[] {
   return points;
 }
 
+/**
+ * Generate a lightning bolt path with memoization
+ * Cached based on all parameters including seed for reproducible results
+ * Note: If seed is random, each call will be unique and won't benefit from cache
+ * Uses precision=1 for animations
+ */
+export const genLightningPath = memoize(genLightningPathImpl, {
+  maxSize: 30, // Lightning paths are larger, keep fewer cached
+  maxAge: 30000, // Shorter cache time for dynamic effects
+  precision: 1,
+});
+
 // Generate lightning with branches
 type GenLightningWithBranchesParams = GenLightningPathParams & {
   branchProbability?: number; // Probability of branching at each point (0-1)
@@ -350,7 +388,8 @@ export type LightningBolt = {
   branches: Point2D[][];
 };
 
-export function genLightningWithBranches(
+// Internal non-memoized implementation
+function genLightningWithBranchesImpl(
   params: GenLightningWithBranchesParams
 ): LightningBolt {
   const { start, end, displacement = 50 } = params;
@@ -414,3 +453,15 @@ export function genLightningWithBranches(
 
   return { main: mainBolt, branches };
 }
+
+/**
+ * Generate lightning with branches and memoization
+ * Cached based on all parameters including seed
+ * Use a consistent seed value to benefit from caching
+ * Uses precision=1 for animations
+ */
+export const genLightningWithBranches = memoize(genLightningWithBranchesImpl, {
+  maxSize: 20, // Complex structures, keep fewer cached
+  maxAge: 30000,
+  precision: 1,
+});
