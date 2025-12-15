@@ -9,7 +9,7 @@ type SceneStore = {
 };
 
 export const useSceneStore = create<SceneStore>((set) => ({
-  currentScene: "Cap",
+  currentScene: "Multiplier Text",
   showPixiStats: false,
   setCurrentScene: (scene) => set({ currentScene: scene }),
   setShowPixiStats: (show) => set({ showPixiStats: show }),
