@@ -65,14 +65,20 @@ export default function HelloWorld({ isPixi }: SceneProps) {
 
   const handlePointerMove = (e: FederatedPointerEvent) => {
     const { x, y } = e.global;
+    // console.log(`Pointer moved to x:${x}, y:${y}`);
     setSpritePosition({ x, y });
   };
 
   return (
     <pixiContainer
       eventMode="static"
+      // interactive={true}
       hitArea={containerHitArea}
       onPointerMove={handlePointerMove}
+      onPointerDown={() => console.log("Pointer down on pixi container")}
+      onClick={() => console.log("Click on pixi container")}
+      width={width}
+      height={height}
     >
       <BunnySprite x={spritePosition.x} y={spritePosition.y} />
       <BluredText {...bluredTextProps} />

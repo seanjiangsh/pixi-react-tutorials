@@ -5,6 +5,7 @@ import Lightning from "src/scenes/lightning/Lightning";
 import Spotlight from "src/scenes/spotlight/Spotlight";
 import Cap from "src/scenes/cap/Cap";
 import MultiplierText from "src/scenes/multiplier-text/MultiplierText";
+import GridBoard from "src/scenes/grid-board/GridBoard";
 
 export const Scenes = {
   "Hello-World": HelloWorld,
@@ -14,6 +15,7 @@ export const Scenes = {
   Spotlight: Spotlight,
   Cap: Cap,
   "Multiplier Text": MultiplierText,
+  "Grid-board": GridBoard,
 };
 
 export type SceneName = keyof typeof Scenes;

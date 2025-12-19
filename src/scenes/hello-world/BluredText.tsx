@@ -27,6 +27,7 @@ export default function BluredText(props: BluredTextProps) {
       anchor={0.5}
       x={x}
       y={y}
+      eventMode="none"
       filters={[blurFilter]}
       style={
         new TextStyle({

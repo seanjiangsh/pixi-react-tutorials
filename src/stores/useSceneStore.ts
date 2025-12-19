@@ -9,8 +9,8 @@ type SceneStore = {
 };
 
 export const useSceneStore = create<SceneStore>((set) => ({
-  currentScene: "Multiplier Text",
-  showPixiStats: false,
+  currentScene: "Grid-board",
+  showPixiStats: true,
   setCurrentScene: (scene) => set({ currentScene: scene }),
   setShowPixiStats: (show) => set({ showPixiStats: show }),
 }));
