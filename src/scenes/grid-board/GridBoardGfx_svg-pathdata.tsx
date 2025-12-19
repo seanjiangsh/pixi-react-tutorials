@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
-import { Graphics } from "pixi.js";
-import { extend } from "@pixi/react";
+import { useState, useEffect, useRef } from "react";
+import { Graphics, Container } from "pixi.js";
+import { extend, useTick } from "@pixi/react";
 import { SVGPathData } from "svg-pathdata";
+import { useControls } from "leva";
 
 // import originalBorderSvgUrl from "./Betting-Grid-Border.svg?url";
 import borderSvgUrl from "./Betting-Grid-Border.svg";
@@ -12,7 +13,7 @@ import {
   type SVGDimensions,
 } from "src/utils/graphics/svgParser";
 
-extend({ Graphics });
+extend({ Graphics, Container });
 
 export function GridBoardGfx_svgPathdata() {
   const [svgPaths, setSvgPaths] = useState<SVGPath[]>([]);
@@ -22,6 +23,21 @@ export function GridBoardGfx_svgPathdata() {
   });
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  // Animation state (use state instead of refs for rendering)
+  const [currentScaleY, setCurrentScaleY] = useState(1);
+  const [currentSkewY, setCurrentSkewY] = useState(0);
+  const [currentY, setCurrentY] = useState(0);
+
+  const targetScaleYRef = useRef(1);
+  const targetSkewYRef = useRef(0);
+  const targetYRef = useRef(0);
+
+  const { tiltEnabled, tiltAngle, tiltScale } = useControls("Perspective", {
+    tiltEnabled: { value: false, label: "Enable Tilt" },
+    tiltAngle: { value: 4.7, min: 0, max: 45, step: 0.1, label: "Tilt Angle" },
+    tiltScale: { value: 0.745, min: 0.5, max: 1, step: 0.01, label: "Y Scale" },
+  });
 
   useEffect(() => {
     fetchAndParseSVG(borderSvgUrl).then(({ paths, dimensions }) => {
@@ -42,8 +58,39 @@ export function GridBoardGfx_svgPathdata() {
     });
   }, []);
 
+  // Update target values when tilt settings change
+  useEffect(() => {
+    if (tiltEnabled) {
+      const radians = (tiltAngle * Math.PI) / 180;
+      targetScaleYRef.current = tiltScale;
+      targetSkewYRef.current = radians * 0.02;
+      targetYRef.current = -svgDimensions.height * 0.084;
+    } else {
+      targetScaleYRef.current = 1;
+      targetSkewYRef.current = 0;
+      targetYRef.current = 0;
+    }
+  }, [tiltEnabled, tiltAngle, tiltScale, svgDimensions.height]);
+
+  // Animate transform values (1 second = 60 frames at 60fps, so 1/60 per frame)
+  useTick((delta) => {
+    const animationSpeed = delta.deltaMS / 60; // 1 second animation at 60fps
+
+    setCurrentScaleY(
+      (prev) => prev + (targetScaleYRef.current - prev) * animationSpeed
+    );
+    setCurrentSkewY(
+      (prev) => prev + (targetSkewYRef.current - prev) * animationSpeed
+    );
+    setCurrentY((prev) => prev + (targetYRef.current - prev) * animationSpeed);
+  });
+
   return (
-    <>
+    <pixiContainer
+      y={currentY}
+      scale={{ x: 1, y: currentScaleY }}
+      skew={{ x: 0, y: currentSkewY }}
+    >
       {svgPaths.map((pathData, index) => (
         <pixiGraphics
           key={index}
@@ -189,6 +236,6 @@ export function GridBoardGfx_svgPathdata() {
           }}
         />
       ))}
-    </>
+    </pixiContainer>
   );
 }
