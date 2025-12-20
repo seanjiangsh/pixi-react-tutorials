@@ -3,7 +3,7 @@ import { Graphics } from "pixi.js";
 
 import { type GeneratedPoints } from "src/utils/graphics/misc";
 import { type ColorAlpha } from "src/types/types";
-import { BlurGfx } from "src/utils/graphics/draw";
+import { BlurGfx } from "src/utils/graphics/draws";
 
 // Combined Meteor BlurGfx (semicircle head + triangle tail in one graphic)
 export type MeteorShapeLayerProps = ColorAlpha & {

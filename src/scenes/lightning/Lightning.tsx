@@ -3,6 +3,7 @@ import { SceneProps } from "src/scenes/Scenes";
 import { LightningDOM } from "src/scenes/lightning/LightningDOM";
 import { LightningPixi } from "src/scenes/lightning/LightningPixi";
 import { useLightningStore } from "src/scenes/lightning/useLightningStore";
+import { useSceneStore } from "src/stores/useSceneStore";
 
 export type BorderBoltProps = {
   enableLightning?: boolean;
@@ -101,6 +102,13 @@ export default function Lightning(props: LightningProps) {
       regenerate();
     }
   }, [regenerateTrigger, regenerate]);
+
+  // Set canvas pointer-events to none for DOM interactions
+  useEffect(() => {
+    const { setCanvasPointerEvents } = useSceneStore.getState();
+    setCanvasPointerEvents("none");
+    return () => setCanvasPointerEvents("auto");
+  }, []);
 
   if (isPixi) {
     return <LightningPixi />;

@@ -1,7 +1,9 @@
 import { useControls, button } from "leva";
+import { useEffect } from "react";
 
 import useSceneSize from "src/utils/hooks/useSceneSize";
 import { SceneProps } from "src/scenes/Scenes";
+import { useSceneStore } from "src/stores/useSceneStore";
 import {
   MeteorGfx,
   PathTypes,
@@ -31,6 +33,11 @@ export default function Meteor(props: MeteorProps) {
 
   const { width, height } = useSceneSize();
   const { resetKey, resetAnimation } = useMeteorStore();
+  const { setCanvasPointerEvents } = useSceneStore();
+
+  useEffect(() => {
+    setCanvasPointerEvents("auto");
+  }, [setCanvasPointerEvents]);
 
   const controls = useControls(
     "Controls",

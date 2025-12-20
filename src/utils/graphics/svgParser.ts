@@ -1,11 +1,19 @@
 import { SVGPathData as SVGPathDataParser } from "svg-pathdata";
 
+export interface SVGCommand {
+  type: string;
+  typeName: string;
+  coords: Record<string, number>;
+}
+
 export interface SVGPathData {
   path: string;
   stroke?: string;
   strokeWidth?: number;
   isClosed?: boolean;
   bounds?: { x: number; y: number; width: number; height: number };
+  center?: { x: number; y: number };
+  commands?: SVGCommand[];
 }
 
 export interface SVGDimensions {
@@ -13,8 +21,14 @@ export interface SVGDimensions {
   height: number;
 }
 
+export interface PathGroup {
+  closedPaths: SVGPathData[];
+  openPaths: SVGPathData[];
+}
+
 export interface ParsedSVG {
   paths: SVGPathData[];
+  pathGroups: PathGroup;
   dimensions: SVGDimensions;
 }
 
@@ -24,6 +38,8 @@ export interface ParsedSVG {
 function analyzePathData(pathString: string): {
   isClosed: boolean;
   bounds: { x: number; y: number; width: number; height: number };
+  center?: { x: number; y: number };
+  commands: SVGCommand[];
 } {
   // console.log("🔍 Analyzing path:", pathString.substring(0, 100));
 
@@ -35,6 +51,24 @@ function analyzePathData(pathString: string): {
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
+  let currentX = 0;
+  let currentY = 0;
+
+  const svgCommands: SVGCommand[] = [];
+
+  // Map of command type numbers to names
+  const commandTypeNames: Record<number, string> = {
+    [SVGPathDataParser.MOVE_TO]: "MOVE_TO",
+    [SVGPathDataParser.LINE_TO]: "LINE_TO",
+    [SVGPathDataParser.HORIZ_LINE_TO]: "HORIZ_LINE_TO",
+    [SVGPathDataParser.VERT_LINE_TO]: "VERT_LINE_TO",
+    [SVGPathDataParser.CURVE_TO]: "CURVE_TO",
+    [SVGPathDataParser.SMOOTH_CURVE_TO]: "SMOOTH_CURVE_TO",
+    [SVGPathDataParser.QUAD_TO]: "QUAD_TO",
+    [SVGPathDataParser.SMOOTH_QUAD_TO]: "SMOOTH_QUAD_TO",
+    [SVGPathDataParser.ARC]: "ARC",
+    [SVGPathDataParser.CLOSE_PATH]: "CLOSE_PATH",
+  };
 
   commands.forEach((command) => {
     if (command.type === SVGPathDataParser.CLOSE_PATH) {
@@ -42,41 +76,95 @@ function analyzePathData(pathString: string): {
       // console.log("✅ Found CLOSE_PATH command");
     }
 
+    // Extract coordinates for this command
+    const coords: Record<string, number> = {};
+
     // Handle main coordinates
     if ("x" in command && "y" in command) {
+      coords.x = command.x;
+      coords.y = command.y;
+      currentX = command.x;
+      currentY = command.y;
       minX = Math.min(minX, command.x);
       minY = Math.min(minY, command.y);
       maxX = Math.max(maxX, command.x);
       maxY = Math.max(maxY, command.y);
+    } else if ("x" in command) {
+      // HORIZ_LINE_TO only has x
+      coords.x = command.x;
+      currentX = command.x;
+      minX = Math.min(minX, command.x);
+      maxX = Math.max(maxX, command.x);
+      // Use current Y for bounds
+      minY = Math.min(minY, currentY);
+      maxY = Math.max(maxY, currentY);
+    } else if ("y" in command) {
+      // VERT_LINE_TO only has y
+      coords.y = command.y;
+      currentY = command.y;
+      minY = Math.min(minY, command.y);
+      maxY = Math.max(maxY, command.y);
+      // Use current X for bounds
+      minX = Math.min(minX, currentX);
+      maxX = Math.max(maxX, currentX);
     }
 
     // Handle control points for curves
     if ("x1" in command && "y1" in command) {
+      coords.x1 = command.x1;
+      coords.y1 = command.y1;
       minX = Math.min(minX, command.x1);
       minY = Math.min(minY, command.y1);
       maxX = Math.max(maxX, command.x1);
       maxY = Math.max(maxY, command.y1);
     }
     if ("x2" in command && "y2" in command) {
+      coords.x2 = command.x2;
+      coords.y2 = command.y2;
       minX = Math.min(minX, command.x2);
       minY = Math.min(minY, command.y2);
       maxX = Math.max(maxX, command.x2);
       maxY = Math.max(maxY, command.y2);
     }
+
+    // Handle arc parameters
+    if ("rX" in command) coords.rX = command.rX;
+    if ("rY" in command) coords.rY = command.rY;
+    if ("xRot" in command) coords.xRot = command.xRot;
+    if ("lArcFlag" in command) coords.lArcFlag = command.lArcFlag;
+    if ("sweepFlag" in command) coords.sweepFlag = command.sweepFlag;
+
+    svgCommands.push({
+      type: command.type.toString(),
+      typeName: commandTypeNames[command.type] || "UNKNOWN",
+      coords,
+    });
   });
 
   // console.log(
   //   `Path analysis result: isClosed=${isClosed}, commands count=${commands.length}`
   // );
 
+  const bounds = {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+
+  // Calculate center point for closed paths
+  const center = isClosed
+    ? {
+        x: minX + (maxX - minX) / 2,
+        y: minY + (maxY - minY) / 2,
+      }
+    : undefined;
+
   return {
     isClosed,
-    bounds: {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
-    },
+    bounds,
+    center,
+    commands: svgCommands,
   };
 }
 
@@ -108,8 +196,16 @@ export function parseSVG(svgText: string): ParsedSVG {
       pathElement.getAttribute("stroke-width") || "1"
     );
     if (d) {
-      const { isClosed, bounds } = analyzePathData(d);
-      paths.push({ path: d, stroke, strokeWidth, isClosed, bounds });
+      const { isClosed, bounds, center, commands } = analyzePathData(d);
+      paths.push({
+        path: d,
+        stroke,
+        strokeWidth,
+        isClosed,
+        bounds,
+        center,
+        commands,
+      });
     }
   });
 
@@ -127,11 +223,25 @@ export function parseSVG(svgText: string): ParsedSVG {
 
     // Convert rect to path
     const rectPath = convertRectToPath(x, y, width, height, transform);
-    const { isClosed, bounds } = analyzePathData(rectPath);
-    paths.push({ path: rectPath, stroke, strokeWidth, isClosed, bounds });
+    const { isClosed, bounds, center, commands } = analyzePathData(rectPath);
+    paths.push({
+      path: rectPath,
+      stroke,
+      strokeWidth,
+      isClosed,
+      bounds,
+      center,
+      commands,
+    });
   });
 
-  return { paths, dimensions };
+  // Group paths by closed/open status
+  const pathGroups: PathGroup = {
+    closedPaths: paths.filter((p) => p.isClosed),
+    openPaths: paths.filter((p) => !p.isClosed),
+  };
+
+  return { paths, pathGroups, dimensions };
 }
 
 /**

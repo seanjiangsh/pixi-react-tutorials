@@ -11,6 +11,7 @@ import {
 
 import useSceneSize from "src/utils/hooks/useSceneSize";
 import { SceneProps } from "src/scenes/Scenes";
+import { useSceneStore } from "src/stores/useSceneStore";
 import BluredText from "src/scenes/hello-world/BluredText";
 
 // extend tells @pixi/react what Pixi.js components are available
@@ -48,6 +49,11 @@ function BunnySprite({ x, y }: BunnySpriteProps) {
 
 export default function HelloWorld({ isPixi }: SceneProps) {
   const { width, height } = useSceneSize();
+  const { setCanvasPointerEvents } = useSceneStore();
+
+  useEffect(() => {
+    setCanvasPointerEvents("auto");
+  }, [setCanvasPointerEvents]);
 
   const [spritePosition, setSpritePosition] = useState({
     x: width / 2,

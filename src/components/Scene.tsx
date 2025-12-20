@@ -49,13 +49,22 @@ export default function Scene({ sceneName }: SceneProps) {
   const appRef = useRef<HTMLDivElement>(null);
   const [pixiApp, setPixiApp] = useState<PixiApplication | null>(null);
   const SceneComponent = Scenes[sceneName];
-  const { showPixiStats } = useSceneStore();
+  const { showPixiStats, canvasPointerEvents } = useSceneStore();
 
   // Configure Application initialization with 30 FPS and store app reference
   const onInit = (app: PixiApplication) => {
     app.ticker.maxFPS = 30;
     setPixiApp(app);
   };
+
+  // Apply pointer-events to canvas element
+  useEffect(() => {
+    if (!appRef.current) return;
+    const canvas = appRef.current.querySelector("canvas");
+    if (canvas) {
+      canvas.style.pointerEvents = canvasPointerEvents;
+    }
+  }, [canvasPointerEvents]);
 
   return (
     <div className="scene" ref={appRef}>
