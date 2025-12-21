@@ -1,105 +1,109 @@
 import { Graphics } from "pixi.js";
+
 import { SVGCommand } from "./svgParser";
-import { SVGPathData as SVGPathDataParser } from "svg-pathdata";
+
+export type PointTransform = (x: number, y: number) => { x: number; y: number };
 
 /**
  * Draws an SVG path onto a PixiJS Graphics object using pre-parsed SVG commands
  * @param g - The PixiJS Graphics object to draw on
  * @param commands - The array of SVG commands (pre-parsed from an SVG path)
+ * @param transformPoint - Optional function to transform points (e.g., for perspective)
  */
-export function drawSVGPath(g: Graphics, commands: SVGCommand[]): void {
+export function drawSVGPath(
+  g: Graphics,
+  commands: SVGCommand[],
+  transformPoint?: PointTransform
+): void {
   let currentX = 0;
   let currentY = 0;
 
-  // Map of command type numbers
-  const MOVE_TO = SVGPathDataParser.MOVE_TO.toString();
-  const LINE_TO = SVGPathDataParser.LINE_TO.toString();
-  const HORIZ_LINE_TO = SVGPathDataParser.HORIZ_LINE_TO.toString();
-  const VERT_LINE_TO = SVGPathDataParser.VERT_LINE_TO.toString();
-  const CURVE_TO = SVGPathDataParser.CURVE_TO.toString();
-  const SMOOTH_CURVE_TO = SVGPathDataParser.SMOOTH_CURVE_TO.toString();
-  const QUAD_TO = SVGPathDataParser.QUAD_TO.toString();
-  const SMOOTH_QUAD_TO = SVGPathDataParser.SMOOTH_QUAD_TO.toString();
-  const ARC = SVGPathDataParser.ARC.toString();
-  const CLOSE_PATH = SVGPathDataParser.CLOSE_PATH.toString();
+  // Default identity transform if none provided
+  const transform: PointTransform = transformPoint || ((x, y) => ({ x, y }));
 
-  commands.forEach((command) => {
-    switch (command.type) {
-      case MOVE_TO:
-        g.moveTo(command.coords.x, command.coords.y);
-        currentX = command.coords.x;
-        currentY = command.coords.y;
+  commands.forEach((cmd) => {
+    const coords = cmd.coords;
+
+    switch (cmd.typeName) {
+      case "MOVE_TO": {
+        currentX = coords.x;
+        currentY = coords.y;
+        const p = transform(currentX, currentY);
+        g.moveTo(p.x, p.y);
         break;
+      }
 
-      case LINE_TO:
-        g.lineTo(command.coords.x, command.coords.y);
-        currentX = command.coords.x;
-        currentY = command.coords.y;
+      case "LINE_TO": {
+        currentX = coords.x;
+        currentY = coords.y;
+        const p = transform(currentX, currentY);
+        g.lineTo(p.x, p.y);
         break;
+      }
 
-      case HORIZ_LINE_TO:
-        g.lineTo(command.coords.x, currentY);
-        currentX = command.coords.x;
+      case "HORIZ_LINE_TO": {
+        currentX = coords.x;
+        const p = transform(currentX, currentY);
+        g.lineTo(p.x, p.y);
         break;
+      }
 
-      case VERT_LINE_TO:
-        g.lineTo(currentX, command.coords.y);
-        currentY = command.coords.y;
+      case "VERT_LINE_TO": {
+        currentY = coords.y;
+        const p = transform(currentX, currentY);
+        g.lineTo(p.x, p.y);
         break;
+      }
 
-      case CURVE_TO:
-        g.bezierCurveTo(
-          command.coords.x1,
-          command.coords.y1,
-          command.coords.x2,
-          command.coords.y2,
-          command.coords.x,
-          command.coords.y
-        );
-        currentX = command.coords.x;
-        currentY = command.coords.y;
+      case "CURVE_TO": {
+        const p1 = transform(coords.x1, coords.y1);
+        const p2 = transform(coords.x2, coords.y2);
+        const p = transform(coords.x, coords.y);
+        currentX = coords.x;
+        currentY = coords.y;
+        g.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p.x, p.y);
         break;
+      }
 
-      case SMOOTH_CURVE_TO:
-        // For smooth curve, we need the previous control point
-        // This is a simplified version using quadratic curve
-        g.quadraticCurveTo(
-          command.coords.x2,
-          command.coords.y2,
-          command.coords.x,
-          command.coords.y
-        );
-        currentX = command.coords.x;
-        currentY = command.coords.y;
+      case "SMOOTH_CURVE_TO": {
+        const p2 = transform(coords.x2, coords.y2);
+        const p = transform(coords.x, coords.y);
+        currentX = coords.x;
+        currentY = coords.y;
+        g.bezierCurveTo(p2.x, p2.y, p2.x, p2.y, p.x, p.y);
         break;
+      }
 
-      case QUAD_TO:
-        g.quadraticCurveTo(
-          command.coords.x1,
-          command.coords.y1,
-          command.coords.x,
-          command.coords.y
-        );
-        currentX = command.coords.x;
-        currentY = command.coords.y;
+      case "QUAD_TO": {
+        const cp = transform(coords.x1, coords.y1);
+        const p = transform(coords.x, coords.y);
+        currentX = coords.x;
+        currentY = coords.y;
+        g.quadraticCurveTo(cp.x, cp.y, p.x, p.y);
         break;
+      }
 
-      case SMOOTH_QUAD_TO:
-        g.lineTo(command.coords.x, command.coords.y);
-        currentX = command.coords.x;
-        currentY = command.coords.y;
+      case "SMOOTH_QUAD_TO": {
+        const p = transform(coords.x, coords.y);
+        currentX = coords.x;
+        currentY = coords.y;
+        g.lineTo(p.x, p.y);
         break;
+      }
 
-      case ARC:
+      case "ARC": {
         // Arc is complex, approximate with lines
-        g.lineTo(command.coords.x, command.coords.y);
-        currentX = command.coords.x;
-        currentY = command.coords.y;
+        const p = transform(coords.x, coords.y);
+        currentX = coords.x;
+        currentY = coords.y;
+        g.lineTo(p.x, p.y);
         break;
+      }
 
-      case CLOSE_PATH:
+      case "CLOSE_PATH": {
         g.closePath();
         break;
+      }
     }
   });
 }
