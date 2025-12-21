@@ -1,6 +1,7 @@
 import { useControls, folder } from "leva";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+
 import { Scenes, type SceneName } from "src/scenes/Scenes";
 import { useSceneStore } from "src/stores/useSceneStore";
 
@@ -9,6 +10,12 @@ export function GlobalControls() {
   const location = useLocation();
   const { currentScene, showPixiStats, setCurrentScene, setShowPixiStats } =
     useSceneStore();
+
+  // Prevent Leva's initial onChange from navigating and overriding deep links
+  const initializedRef = useRef(false);
+  useEffect(() => {
+    initializedRef.current = true;
+  }, []);
 
   // Sync URL with store on mount and navigation
   useEffect(() => {
@@ -34,6 +41,8 @@ export function GlobalControls() {
       onChange: (value: string) => {
         const sceneName = value as SceneName;
         setCurrentScene(sceneName);
+        // Only navigate after initial mount to avoid overriding the hash route
+        if (!initializedRef.current) return;
         navigate(`/${sceneName.toLowerCase()}`);
       },
     },

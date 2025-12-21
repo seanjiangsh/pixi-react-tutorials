@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react";
+import { useControls } from "leva";
 
 import { SceneProps } from "src/scenes/Scenes";
 import { fetchAndParseSVG } from "src/utils/graphics/svgParser";
@@ -11,6 +12,11 @@ export default function SVGParser({ isPixi }: SceneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setParsedSVG, fileInputRef: storeFileInputRef } = useSVGParserStore();
   const { setCanvasPointerEvents } = useSceneStore();
+
+  const { showLabels, minimal } = useControls("SVG Parser", {
+    showLabels: false,
+    minimal: false,
+  });
 
   // Set canvas pointer-events to auto on mount
   useEffect(() => {
@@ -31,20 +37,16 @@ export default function SVGParser({ isPixi }: SceneProps) {
     const url = URL.createObjectURL(file);
 
     try {
-      // Parse using the fetchAndParseSVG utility
-      const parsed = await fetchAndParseSVG(url);
+      // Parse using the fetchAndParseSVG utility with minimal mode
+      const parsed = await fetchAndParseSVG(url, minimal);
 
-      // Use closed paths from the pathGroups
-      const closedPaths = parsed.pathGroups.closedPaths;
+      // Filter closed paths from the parsed paths
+      const closedPaths = parsed.paths.filter((p) => p.isClosed);
 
       console.log("Parsed SVG", parsed);
 
       setParsedSVG({
         paths: closedPaths,
-        pathGroups: {
-          closedPaths,
-          openPaths: parsed.pathGroups.openPaths,
-        },
         dimensions: parsed.dimensions,
       });
     } finally {
@@ -71,5 +73,7 @@ export default function SVGParser({ isPixi }: SceneProps) {
   }
 
   // Pixi elements
-  return <SVGParserPixi onButtonClick={handleButtonClick} />;
+  return (
+    <SVGParserPixi onButtonClick={handleButtonClick} showLabels={showLabels} />
+  );
 }

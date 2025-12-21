@@ -7,7 +7,7 @@ export interface SVGCommand {
 }
 
 export interface SVGPathData {
-  path: string;
+  path?: string;
   stroke?: string;
   strokeWidth?: number;
   isClosed?: boolean;
@@ -28,7 +28,7 @@ export interface PathGroup {
 
 export interface ParsedSVG {
   paths: SVGPathData[];
-  pathGroups: PathGroup;
+  pathGroups?: PathGroup;
   dimensions: SVGDimensions;
 }
 
@@ -136,7 +136,7 @@ function analyzePathData(pathString: string): {
 
     svgCommands.push({
       type: command.type.toString(),
-      typeName: commandTypeNames[command.type] || "UNKNOWN",
+      typeName: commandTypeNames[command.type] ?? "UNKNOWN",
       coords,
     });
   });
@@ -170,8 +170,10 @@ function analyzePathData(pathString: string): {
 
 /**
  * Parses an SVG string and extracts path data and dimensions
+ * @param svgText - The SVG content as a string
+ * @param minimal - If true, excludes the SVG path string from results (for rendering only). If false (default), includes full path data.
  */
-export function parseSVG(svgText: string): ParsedSVG {
+export function parseSVG(svgText: string, minimal: boolean = false): ParsedSVG {
   const parser = new DOMParser();
   const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
 
@@ -191,16 +193,15 @@ export function parseSVG(svgText: string): ParsedSVG {
   // Get path elements
   svgDoc.querySelectorAll("path").forEach((pathElement) => {
     const d = pathElement.getAttribute("d");
-    const stroke = pathElement.getAttribute("stroke") || undefined;
+    const stroke = pathElement.getAttribute("stroke") ?? undefined;
     const strokeWidth = parseFloat(
-      pathElement.getAttribute("stroke-width") || "1"
+      pathElement.getAttribute("stroke-width") ?? "1"
     );
     if (d) {
       const { isClosed, bounds, center, commands } = analyzePathData(d);
       paths.push({
-        path: d,
-        stroke,
-        strokeWidth,
+        ...(minimal ? {} : { path: d }),
+        ...(minimal ? {} : { stroke, strokeWidth }),
         isClosed,
         bounds,
         center,
@@ -211,23 +212,22 @@ export function parseSVG(svgText: string): ParsedSVG {
 
   // Get rect elements and convert them to paths
   svgDoc.querySelectorAll("rect").forEach((rectElement) => {
-    const x = parseFloat(rectElement.getAttribute("x") || "0");
-    const y = parseFloat(rectElement.getAttribute("y") || "0");
-    const width = parseFloat(rectElement.getAttribute("width") || "0");
-    const height = parseFloat(rectElement.getAttribute("height") || "0");
+    const x = parseFloat(rectElement.getAttribute("x") ?? "0");
+    const y = parseFloat(rectElement.getAttribute("y") ?? "0");
+    const width = parseFloat(rectElement.getAttribute("width") ?? "0");
+    const height = parseFloat(rectElement.getAttribute("height") ?? "0");
     const transform = rectElement.getAttribute("transform");
-    const stroke = rectElement.getAttribute("stroke") || undefined;
+    const stroke = rectElement.getAttribute("stroke") ?? undefined;
     const strokeWidth = parseFloat(
-      rectElement.getAttribute("stroke-width") || "1"
+      rectElement.getAttribute("stroke-width") ?? "1"
     );
 
     // Convert rect to path
     const rectPath = convertRectToPath(x, y, width, height, transform);
     const { isClosed, bounds, center, commands } = analyzePathData(rectPath);
     paths.push({
-      path: rectPath,
-      stroke,
-      strokeWidth,
+      ...(minimal ? {} : { path: rectPath }),
+      ...(minimal ? {} : { stroke, strokeWidth }),
       isClosed,
       bounds,
       center,
@@ -236,6 +236,10 @@ export function parseSVG(svgText: string): ParsedSVG {
   });
 
   // Group paths by closed/open status
+  if (minimal) {
+    return { paths, dimensions };
+  }
+
   const pathGroups: PathGroup = {
     closedPaths: paths.filter((p) => p.isClosed),
     openPaths: paths.filter((p) => !p.isClosed),
@@ -291,9 +295,14 @@ function convertRectToPath(
 
 /**
  * Fetches and parses an SVG file from a URL
+ * @param url - The URL of the SVG file
+ * @param minimal - If true, excludes the SVG path string from results (for rendering only). If false (default), includes full path data.
  */
-export async function fetchAndParseSVG(url: string): Promise<ParsedSVG> {
+export async function fetchAndParseSVG(
+  url: string,
+  minimal: boolean = false
+): Promise<ParsedSVG> {
   const response = await fetch(url);
   const text = await response.text();
-  return parseSVG(text);
+  return parseSVG(text, minimal);
 }

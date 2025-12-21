@@ -1,132 +1,105 @@
 import { useState, useEffect, useRef } from "react";
-import { Graphics, Container } from "pixi.js";
-import { extend, useTick } from "@pixi/react";
+import { Graphics, Container, Matrix, Point } from "pixi.js";
+import { extend } from "@pixi/react";
 import { useControls } from "leva";
+import { gridBoardControls } from "./gridBoardControls";
+import { ParsedSVG } from "src/utils/graphics/svgParser";
 
-import borderSvgUrl from "./Betting-Grid-Border.svg";
-
-import {
-  fetchAndParseSVG,
-  type SVGDimensions,
-  type PathGroup,
-} from "src/utils/graphics/svgParser";
-import { drawSVGPath } from "src/utils/graphics/draws";
+import { DATA_ROULETTE_GRID_BOARD } from "./data";
+import { drawSVGPath } from "src/utils/graphics/svg";
 
 extend({ Graphics, Container });
 
 export function GridBoardGfx() {
-  const [pathGroups, setPathGroups] = useState<PathGroup>({
-    closedPaths: [],
-    openPaths: [],
-  });
-  const [svgDimensions, setSvgDimensions] = useState<SVGDimensions>({
-    width: 0,
-    height: 0,
-  });
+  const [parsedSVG, setParsedSVG] = useState<ParsedSVG | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const containerRef = useRef<Container | null>(null);
 
-  // Animation state (use state instead of refs for rendering)
-  const [currentScaleY, setCurrentScaleY] = useState(1);
-  const [currentSkewY, setCurrentSkewY] = useState(0);
-  const [currentY, setCurrentY] = useState(0);
-
-  const targetScaleYRef = useRef(1);
-  const targetSkewYRef = useRef(0);
-  const targetYRef = useRef(0);
-
-  const { tiltEnabled, tiltAngle, tiltScale } = useControls("Perspective", {
-    tiltEnabled: { value: false, label: "Enable Tilt" },
-    tiltAngle: { value: 4.7, min: 0, max: 45, step: 0.1, label: "Tilt Angle" },
-    tiltScale: { value: 0.745, min: 0.5, max: 1, step: 0.01, label: "Y Scale" },
-  });
+  const {
+    tiltEnabled,
+    tilt,
+    depth,
+    sy,
+    skewX,
+    py,
+    useDirectMatrix,
+    strokeWidth,
+  } = useControls("Perspective", gridBoardControls);
 
   useEffect(() => {
-    fetchAndParseSVG(borderSvgUrl).then(({ pathGroups, dimensions }) => {
-      // console.log("📊 Parsed SVG data:", {
-      //   closedPaths: pathGroups.closedPaths.length,
-      //   openPaths: pathGroups.openPaths.length,
-      //   dimensions,
-      // });
-      // pathGroups.closedPaths.forEach((path, i) => {
-      //   console.log(`Closed Path ${i}:`, {
-      //     bounds: path.bounds,
-      //     center: path.center,
-      //     stroke: path.stroke,
-      //   });
-      // });
-      setPathGroups(pathGroups);
-      setSvgDimensions(dimensions);
-    });
+    setParsedSVG(DATA_ROULETTE_GRID_BOARD);
   }, []);
 
-  // Update target values when tilt settings change
+  // Apply matrix-based tilt per provided sample
+  function applyTilt(
+    obj: Container,
+    tiltValue: number,
+    depthValue: number,
+    directSy: number,
+    directSkewX: number,
+    directPy: number,
+    useDirect: boolean
+  ) {
+    const m = new Matrix();
+
+    // Use either direct matrix parameters or calculated from tilt/depth
+    const syValue = useDirect ? directSy : 1 - tiltValue * 0.4; // vertical squash
+    const skewXValue = useDirect ? directSkewX : tiltValue * 0.6; // horizontal skew factor (shear)
+    const pyValue = useDirect ? directPy : tiltValue * depthValue; // push backward (translate Y)
+
+    // Build transform: scale -> skewX (shear) -> translate
+    m.identity();
+    m.scale(1, syValue);
+    // Skew X can be represented by multiplying with a shear matrix [1, 0, k, 1, 0, 0]
+    m.append(new Matrix(1, 0, skewXValue, 1, 0, 0));
+    m.translate(0, pyValue);
+
+    // Decompose into discrete properties and assign them to the container
+    const t = {
+      position: new Point(),
+      scale: new Point(),
+      pivot: new Point(),
+      skew: new Point(),
+      rotation: 0,
+    };
+    m.decompose(t);
+
+    obj.position.copyFrom(t.position);
+    obj.scale.copyFrom(t.scale);
+    obj.skew.copyFrom(t.skew);
+    obj.rotation = t.rotation;
+    // Keep existing pivot; t.pivot will be (0,0) here.
+  }
+
+  // Update container transform whenever tilt settings change
   useEffect(() => {
+    const obj = containerRef.current;
+    console.log("Applying tilt:", obj, tiltEnabled, tilt, depth);
+    if (!obj) return;
+
     if (tiltEnabled) {
-      const radians = (tiltAngle * Math.PI) / 180;
-      targetScaleYRef.current = tiltScale;
-      targetSkewYRef.current = radians * 0.02;
-      targetYRef.current = -svgDimensions.height * 0.084;
+      applyTilt(obj, tilt, depth, sy, skewX, py, useDirectMatrix);
     } else {
-      targetScaleYRef.current = 1;
-      targetSkewYRef.current = 0;
-      targetYRef.current = 0;
+      // Reset transform to identity components
+      obj.position.set(0, 0);
+      obj.scale.set(1, 1);
+      obj.skew.set(0, 0);
+      obj.rotation = 0;
     }
-  }, [tiltEnabled, tiltAngle, tiltScale, svgDimensions.height]);
-
-  // Animate transform values (1 second = 60 frames at 60fps, so 1/60 per frame)
-  useTick((delta) => {
-    const animationSpeed = delta.deltaMS / 60; // 1 second animation at 60fps
-
-    setCurrentScaleY(
-      (prev) => prev + (targetScaleYRef.current - prev) * animationSpeed
-    );
-    setCurrentSkewY(
-      (prev) => prev + (targetSkewYRef.current - prev) * animationSpeed
-    );
-    setCurrentY((prev) => prev + (targetYRef.current - prev) * animationSpeed);
-  });
+  }, [tiltEnabled, tilt, depth, sy, skewX, py, useDirectMatrix]);
 
   return (
     <pixiContainer
-      y={currentY}
-      scale={{ x: 1, y: currentScaleY }}
-      skew={{ x: 0, y: currentSkewY }}
+      ref={containerRef}
+      // pivot={{ x: parsedSVG.dimensions.width / 2, y: parsedSVG.dimensions.height / 2 }}
     >
-      {/* Render open paths (non-interactive) */}
-      {pathGroups.openPaths.map((pathData, index) => (
+      {/* Render all paths */}
+      {parsedSVG?.paths.map((pathData, index) => (
         <pixiGraphics
-          key={`open-${index}`}
-          x={-svgDimensions.width / 2}
-          y={-svgDimensions.height / 2}
-          eventMode="none"
-          draw={(g) => {
-            g.clear();
-
-            // Set stroke style
-            if (pathData.stroke) {
-              const color = pathData.stroke === "white" ? 0xffffff : 0xffffff;
-              g.setStrokeStyle({
-                width: pathData.strokeWidth || 1,
-                color: color,
-              });
-            }
-
-            // Draw the path using utility
-            drawSVGPath(g, pathData.path);
-
-            // Stroke the path
-            g.stroke();
-          }}
-        />
-      ))}
-
-      {/* Render closed paths (interactive) */}
-      {pathGroups.closedPaths.map((pathData, index) => (
-        <pixiGraphics
-          key={`closed-${index}`}
-          x={-svgDimensions.width / 2}
-          y={-svgDimensions.height / 2}
+          key={`path-${index}`}
+          x={-parsedSVG.dimensions.width / 2}
+          y={-parsedSVG.dimensions.height / 2}
           eventMode="static"
           cursor="pointer"
           onPointerEnter={() => setHoveredIndex(index)}
@@ -138,16 +111,15 @@ export function GridBoardGfx() {
             g.clear();
 
             // Set stroke style
-            if (pathData.stroke) {
-              const color = pathData.stroke === "white" ? 0xffffff : 0xffffff;
-              g.setStrokeStyle({
-                width: pathData.strokeWidth || 1,
-                color: color,
-              });
-            }
+            g.setStrokeStyle({
+              width: strokeWidth,
+              color: 0xffffff,
+            });
 
-            // Draw the path using utility
-            drawSVGPath(g, pathData.path);
+            // Draw the path using utility with pre-parsed commands
+            if (pathData.commands) {
+              drawSVGPath(g, pathData.commands);
+            }
 
             // Determine fill color and alpha
             let fillColor = 0x000000;

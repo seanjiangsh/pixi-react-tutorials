@@ -1,17 +1,20 @@
 import { useMemo, useState } from "react";
 import { Graphics, Container, Text, TextStyle } from "pixi.js";
 import { extend } from "@pixi/react";
+
 import { ParsedSVG } from "src/utils/graphics/svgParser";
-import { drawSVGPath } from "src/utils/graphics/draws";
+import { drawSVGPath } from "src/utils/graphics/svg";
 import useSceneSize from "src/utils/hooks/useSceneSize";
 
 extend({ Graphics, Container, Text });
 
 type SVGParserGfxProps = {
   parsedSVG: ParsedSVG;
+  showLabels: boolean;
 };
 
-export function SVGParserGfx({ parsedSVG }: SVGParserGfxProps) {
+export function SVGParserGfx(props: SVGParserGfxProps) {
+  const { parsedSVG, showLabels } = props;
   const { width: canvasWidth, height: canvasHeight } = useSceneSize();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -34,11 +37,9 @@ export function SVGParserGfx({ parsedSVG }: SVGParserGfxProps) {
   return (
     <pixiContainer>
       {parsedSVG.paths.map((pathData, index) => {
-        if (!pathData.isClosed) return null;
-
         // Use the pre-calculated center point
-        const centroidX = pathData.center?.x || 0;
-        const centroidY = pathData.center?.y || 0;
+        const centroidX = pathData.center?.x ?? 0;
+        const centroidY = pathData.center?.y ?? 0;
 
         return (
           <pixiContainer key={index} x={offsetX} y={offsetY} scale={scale}>
@@ -50,18 +51,16 @@ export function SVGParserGfx({ parsedSVG }: SVGParserGfxProps) {
               draw={(g) => {
                 g.clear();
 
-                // Set stroke style
-                if (pathData.stroke) {
-                  const color =
-                    pathData.stroke === "white" ? 0xffffff : 0xffffff;
-                  g.setStrokeStyle({
-                    width: pathData.strokeWidth || 1,
-                    color: color,
-                  });
-                }
+                // Set default stroke style
+                g.setStrokeStyle({
+                  width: pathData.strokeWidth ?? 1,
+                  color: 0xffffff,
+                });
 
-                // Draw using the utility function
-                drawSVGPath(g, pathData.path);
+                // Draw using the utility function with pre-parsed commands
+                if (pathData.commands) {
+                  drawSVGPath(g, pathData.commands);
+                }
 
                 // Determine fill color and alpha
                 let fillColor = 0x000000;
@@ -82,21 +81,23 @@ export function SVGParserGfx({ parsedSVG }: SVGParserGfxProps) {
             />
 
             {/* Add numbered label at center */}
-            <pixiText
-              text={index.toString()}
-              x={centroidX}
-              y={centroidY}
-              anchor={{ x: 0.5, y: 0.5 }}
-              style={
-                new TextStyle({
-                  fontFamily: "Arial",
-                  fontSize: 24,
-                  fontWeight: "bold",
-                  fill: 0xffffff,
-                  stroke: { color: 0x000000, width: 4 },
-                })
-              }
-            />
+            {showLabels && (
+              <pixiText
+                text={index.toString()}
+                x={centroidX}
+                y={centroidY}
+                anchor={{ x: 0.5, y: 0.5 }}
+                style={
+                  new TextStyle({
+                    fontFamily: "Arial",
+                    fontSize: 24,
+                    fontWeight: "bold",
+                    fill: 0xffffff,
+                    stroke: { color: 0x000000, width: 4 },
+                  })
+                }
+              />
+            )}
           </pixiContainer>
         );
       })}

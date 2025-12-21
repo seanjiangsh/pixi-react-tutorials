@@ -16,8 +16,8 @@ export const Scenes = {
   Spotlight: Spotlight,
   Cap: Cap,
   "Multiplier-Text": MultiplierText,
-  "Grid-Board": GridBoard,
   "Svg-Parser": SVGParser,
+  "Grid-Board": GridBoard,
 };
 
 export type SceneName = keyof typeof Scenes;

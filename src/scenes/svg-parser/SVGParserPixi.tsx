@@ -1,23 +1,28 @@
+import { useState } from "react";
 import { Graphics, Text, TextStyle } from "pixi.js";
 import { extend } from "@pixi/react";
+
 import { SVGParserGfx } from "./SVGParserGfx";
 import { useSVGParserStore } from "./useSVGParserStore";
 import useSceneSize from "src/utils/hooks/useSceneSize";
-import { useState } from "react";
 
 extend({ Graphics, Text });
 
 type SVGParserPixiProps = {
   onButtonClick: () => void;
+  showLabels: boolean;
 };
 
-export function SVGParserPixi({ onButtonClick }: SVGParserPixiProps) {
+export function SVGParserPixi({
+  onButtonClick,
+  showLabels,
+}: SVGParserPixiProps) {
   const { parsedSVG } = useSVGParserStore();
   const { width, height } = useSceneSize();
   const [isHovered, setIsHovered] = useState(false);
 
   if (parsedSVG) {
-    return <SVGParserGfx parsedSVG={parsedSVG} />;
+    return <SVGParserGfx parsedSVG={parsedSVG} showLabels={showLabels} />;
   }
 
   // Button dimensions and position

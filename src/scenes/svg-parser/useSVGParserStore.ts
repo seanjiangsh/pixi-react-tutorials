@@ -1,4 +1,5 @@
 import { create } from "zustand";
+
 import { ParsedSVG } from "src/utils/graphics/svgParser";
 import { useSceneStore } from "src/stores/useSceneStore";
 
@@ -18,8 +19,5 @@ export const useSVGParserStore = create<SVGParserState>((set) => ({
     setCanvasPointerEvents(svg ? "auto" : "none");
   },
   fileInputRef: null,
-  setFileInputRef: (ref) => {
-    console.log("Setting file input ref", ref);
-    set({ fileInputRef: ref });
-  },
+  setFileInputRef: (ref) => set({ fileInputRef: ref }),
 }));
