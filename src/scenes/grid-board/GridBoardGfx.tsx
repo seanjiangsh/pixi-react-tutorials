@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Container } from "pixi.js";
 import { extend } from "@pixi/react";
 import { useControls } from "leva";
-import { gridBoardControls } from "./gridBoardControls";
+import { gridBoardControls, filterControls } from "./gridBoardControls";
 import { ParsedSVG } from "src/utils/graphics/svgParser";
 import { DATA_ROULETTE_GRID_BOARD } from "./data";
 import { GridCell } from "./GridCell";
@@ -18,6 +18,15 @@ export function GridBoardGfx() {
     "Perspective",
     gridBoardControls
   );
+
+  const {
+    blur,
+    blurOpacity,
+    glowDistance,
+    glowOuterStrength,
+    glowInnerStrength,
+    glowQuality,
+  } = useControls("Filters", filterControls);
 
   useEffect(() => {
     setParsedSVG(DATA_ROULETTE_GRID_BOARD);
@@ -44,6 +53,12 @@ export function GridBoardGfx() {
           tilt={tilt}
           pivot={pivot}
           strokeWidth={strokeWidth}
+          blur={blur}
+          blurOpacity={blurOpacity}
+          glowDistance={glowDistance}
+          glowOuterStrength={glowOuterStrength}
+          glowInnerStrength={glowInnerStrength}
+          glowQuality={glowQuality}
           onPointerEnter={() => setHoveredIndex(index)}
           onPointerLeave={() => setHoveredIndex(null)}
           onPointerDown={() =>

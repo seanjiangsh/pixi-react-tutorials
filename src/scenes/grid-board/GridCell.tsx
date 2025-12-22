@@ -1,10 +1,10 @@
-import { Graphics, Container, Text, TextStyle } from "pixi.js";
+import { Container, Text, TextStyle } from "pixi.js";
 import { extend } from "@pixi/react";
 
 import { SVGPathData } from "src/utils/graphics/svgParser";
-import { drawSVGPath } from "src/utils/graphics/svg";
+import { GridCellGfx } from "./GridCellGfx";
 
-extend({ Graphics, Container, Text });
+extend({ Container, Text });
 
 interface GridCellProps {
   pathData: SVGPathData;
@@ -17,6 +17,12 @@ interface GridCellProps {
   tilt: number;
   pivot: number;
   strokeWidth: number;
+  blur: number;
+  blurOpacity: number;
+  glowDistance: number;
+  glowOuterStrength: number;
+  glowInnerStrength: number;
+  glowQuality: number;
   onPointerEnter: () => void;
   onPointerLeave: () => void;
   onPointerDown: () => void;
@@ -25,7 +31,9 @@ interface GridCellProps {
 export function GridCell(props: GridCellProps) {
   const { pathData, index, boardWidth, boardHeight } = props;
   const { isHovered, isSelected } = props;
-  const { tiltEnabled, tilt, pivot, strokeWidth } = props;
+  const { tiltEnabled, tilt, pivot, strokeWidth, blur, blurOpacity } = props;
+  const { glowDistance, glowOuterStrength, glowInnerStrength, glowQuality } =
+    props;
   const { onPointerEnter, onPointerLeave, onPointerDown } = props;
 
   // Apply perspective transform to a point
@@ -95,48 +103,39 @@ export function GridCell(props: GridCellProps) {
 
   return (
     <pixiContainer key={`cell-${index}`}>
-      <pixiGraphics
+      {/* Sharp layer with interaction */}
+      <pixiContainer
         eventMode="static"
         cursor="pointer"
         onPointerEnter={onPointerEnter}
         onPointerLeave={onPointerLeave}
         onPointerDown={onPointerDown}
-        draw={(g) => {
-          g.clear();
+      >
+        <GridCellGfx
+          pathData={pathData}
+          transformPoint={transformPoint}
+          strokeWidth={strokeWidth}
+          isHovered={isHovered}
+          isSelected={isSelected}
+          alpha={1}
+        />
+      </pixiContainer>
 
-          // Set stroke style
-          g.setStrokeStyle({
-            width: strokeWidth,
-            color: 0xffffff,
-          });
-
-          // Draw the path with perspective-transformed coordinates
-          if (pathData.commands) {
-            drawSVGPath(g, pathData.commands, transformPoint);
-          }
-
-          // Determine fill color and alpha
-          let fillColor = 0x000000;
-          let fillAlpha = 0;
-
-          if (isSelected) {
-            fillColor = 0x4caf50; // Green when selected
-            fillAlpha = 0.6;
-          } else if (isHovered) {
-            fillColor = 0x2196f3; // Blue when hovered
-            fillAlpha = 0.4;
-          } else {
-            // Always fill closed paths with transparent color for hit detection
-            fillColor = 0x000000;
-            fillAlpha = 0.01; // Nearly transparent but enables hit detection
-          }
-
-          g.fill({ color: fillColor, alpha: fillAlpha });
-
-          // Stroke the path
-          g.stroke();
-        }}
+      {/* Blurred layer for anti-aliasing (non-interactive) */}
+      <GridCellGfx
+        pathData={pathData}
+        transformPoint={transformPoint}
+        strokeWidth={strokeWidth}
+        isHovered={isHovered}
+        isSelected={isSelected}
+        blur={blur}
+        alpha={blurOpacity}
+        glowDistance={glowDistance}
+        glowOuterStrength={glowOuterStrength}
+        glowInnerStrength={glowInnerStrength}
+        glowQuality={glowQuality}
       />
+
       <pixiText
         text={String(index)}
         x={transformedCenter.x}
