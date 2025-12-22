@@ -1,10 +1,10 @@
-import { Graphics, Container } from "pixi.js";
+import { Graphics, Container, Text, TextStyle } from "pixi.js";
 import { extend } from "@pixi/react";
 
 import { SVGPathData } from "src/utils/graphics/svgParser";
 import { drawSVGPath } from "src/utils/graphics/svg";
 
-extend({ Graphics, Container });
+extend({ Graphics, Container, Text });
 
 interface GridCellProps {
   pathData: SVGPathData;
@@ -57,6 +57,42 @@ export function GridCell(props: GridCellProps) {
     return { x: newX, y: newY };
   };
 
+  // Use the precalculated center from pathData, or fallback to bounds center
+  const cellCenter = pathData.center || {
+    x: pathData.bounds ? pathData.bounds.x + pathData.bounds.width / 2 : 0,
+    y: pathData.bounds ? pathData.bounds.y + pathData.bounds.height / 2 : 0,
+  };
+
+  const transformedCenter = transformPoint(cellCenter.x, cellCenter.y);
+
+  // Calculate perspective transformation for text
+  const calculateTextTransform = () => {
+    if (!tiltEnabled || tilt === 0) {
+      return { skewX: 0, scaleY: 1 };
+    }
+
+    const boardCenterX = boardWidth / 2;
+    const distanceFromCenter = (cellCenter.x - boardCenterX) / (boardWidth / 2);
+
+    // Apply the same perspective transformations as the cells
+    const skewX = distanceFromCenter * tilt * 0.5;
+    const scaleY = 1 - Math.abs(tilt) * 0.3;
+
+    return { skewX, scaleY };
+  };
+
+  const textTransform = calculateTextTransform();
+
+  // Create text style
+  const textStyle = new TextStyle({
+    fontFamily: "Arial",
+    fontSize: 24,
+    fontWeight: "bold",
+    fill: 0xffffff,
+    align: "center",
+    stroke: { color: 0x000000, width: 3 },
+  });
+
   return (
     <pixiContainer key={`cell-${index}`}>
       <pixiGraphics
@@ -100,6 +136,15 @@ export function GridCell(props: GridCellProps) {
           // Stroke the path
           g.stroke();
         }}
+      />
+      <pixiText
+        text={String(index)}
+        x={transformedCenter.x}
+        y={transformedCenter.y}
+        anchor={{ x: 0.5, y: 0.5 }}
+        style={textStyle}
+        skew={{ x: textTransform.skewX, y: 0 }}
+        scale={{ x: 1, y: textTransform.scaleY }}
       />
     </pixiContainer>
   );
