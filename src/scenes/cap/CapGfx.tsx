@@ -1,8 +1,11 @@
 import { useCallback, useMemo } from "react";
-import { Graphics } from "pixi.js";
+import { GradientOptions, Graphics, BlurFilter } from "pixi.js";
 import { extend } from "@pixi/react";
+import { useControls } from "leva";
 
 import { genPointsByEquation } from "src/utils/graphics/misc";
+import { capFillControls, capFilterControls } from "./capControls";
+import { ManagedGraphics } from "src/utils/graphics/ManagedGraphics";
 
 extend({ Graphics });
 
@@ -14,6 +17,12 @@ type CapGfxProps = {
 };
 
 export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
+  const { gradientColor1, gradientColor2 } = useControls(
+    "Fill",
+    capFillControls
+  );
+  const { blurAmount } = useControls("Filters", capFilterControls);
+
   // Generate cap path using parametric equations
   // console.log(
   //   "Rendering CapGfx with D:",
@@ -63,7 +72,6 @@ export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
   const drawCapFill = useCallback(
     (g: Graphics) => {
       g.clear();
-      g.setFillStyle({ color: 0x1a3a2a }); // Darker green fill
 
       if (capPath.length === 0) return;
 
@@ -98,10 +106,36 @@ export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
     [capPath]
   );
 
+  const gradientConfig: GradientOptions = useMemo(
+    () => ({
+      type: "linear" as const,
+      start: { x: 0, y: 0 },
+      end: { x: 0, y: 1 },
+      colorStops: [
+        { offset: 0, color: gradientColor1 },
+        { offset: 1, color: gradientColor2 },
+      ],
+      textureSpace: "local" as const,
+    }),
+    [gradientColor1, gradientColor2]
+  );
+
+  const filters = useMemo(
+    () =>
+      blurAmount > 0
+        ? [{ filterClass: BlurFilter, options: { strength: blurAmount } }]
+        : undefined,
+    [blurAmount]
+  );
+
   return (
     <>
-      {/* Draw fill */}
-      <pixiGraphics draw={drawCapFill} />
+      {/* Draw fill with managed gradient and filters */}
+      <ManagedGraphics
+        draw={drawCapFill}
+        gradient={gradientConfig}
+        filters={filters}
+      />
       {/* Draw stroke on top */}
       <pixiGraphics draw={drawCapStroke} />
     </>

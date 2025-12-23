@@ -28,3 +28,24 @@ export const capControls = {
     label: "Range Multiplier (t)",
   },
 };
+
+export const capFillControls = {
+  gradientColor1: {
+    value: "#1a3a2a",
+    label: "Gradient Color 1",
+  },
+  gradientColor2: {
+    value: "#0d1f15",
+    label: "Gradient Color 2",
+  },
+};
+
+export const capFilterControls = {
+  blurAmount: {
+    value: 0,
+    min: 0,
+    max: 20,
+    step: 0.5,
+    label: "Blur Amount",
+  },
+};
