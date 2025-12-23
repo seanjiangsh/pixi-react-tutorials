@@ -1,15 +1,19 @@
 import { useRef, useEffect, useCallback, useState } from "react";
-import { Graphics, FillGradient, Filter, GradientOptions } from "pixi.js";
+import {
+  Graphics,
+  FillGradient,
+  Filter,
+  GradientOptions,
+  FilterOptions,
+} from "pixi.js";
 import { extend } from "@pixi/react";
 
 extend({ Graphics });
 
 // Generic filter configuration - accepts any Filter class with its options
 export type FilterConfig<T extends Filter = Filter> = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  filterClass: new (options?: any) => T;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  options?: any;
+  filterClass: new (options?: FilterOptions) => T;
+  options?: FilterOptions;
 };
 
 interface ManagedGraphicsProps {

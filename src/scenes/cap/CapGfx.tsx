@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { GradientOptions, Graphics, BlurFilter } from "pixi.js";
+import { GradientOptions, Graphics, BlurFilter, FilterOptions } from "pixi.js";
 import { extend } from "@pixi/react";
 import { useControls } from "leva";
 
@@ -123,7 +123,12 @@ export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
   const filters = useMemo(
     () =>
       blurAmount > 0
-        ? [{ filterClass: BlurFilter, options: { strength: blurAmount } }]
+        ? [
+            {
+              filterClass: BlurFilter,
+              options: { strength: blurAmount } as FilterOptions,
+            },
+          ]
         : undefined,
     [blurAmount]
   );
