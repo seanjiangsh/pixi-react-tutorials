@@ -3,6 +3,7 @@ import { Application } from "@pixi/react";
 import { Stats } from "pixi-stats";
 import { Leva } from "leva";
 import type { Application as PixiApplication } from "pixi.js";
+import { initDevtools } from "@pixi/devtools";
 
 import "src/components/Scene.css";
 import { Scenes, SceneName } from "src/scenes/Scenes";
@@ -55,6 +56,8 @@ export default function Scene({ sceneName }: SceneProps) {
   const onInit = (app: PixiApplication) => {
     app.ticker.maxFPS = 30;
     setPixiApp(app);
+    // Initialize Pixi devtools
+    initDevtools({ app });
   };
 
   // Apply pointer-events to canvas element
