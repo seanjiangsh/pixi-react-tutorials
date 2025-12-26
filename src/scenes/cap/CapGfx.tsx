@@ -4,7 +4,11 @@ import { extend } from "@pixi/react";
 import { useControls } from "leva";
 
 import { genPointsByEquation } from "src/utils/graphics/misc";
-import { capFillControls, capFilterControls } from "./capControls";
+import {
+  capFillControls,
+  capFilterControls,
+  capStrokeControls,
+} from "./capControls";
 import { ManagedGraphics } from "src/utils/graphics/ManagedGraphics";
 
 extend({ Graphics });
@@ -22,6 +26,10 @@ export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
     capFillControls
   );
   const { blurAmount } = useControls("Filters", capFilterControls);
+  const { strokeGradientColor1, strokeGradientColor2 } = useControls(
+    "Stroke",
+    capStrokeControls
+  );
 
   // Generate cap path using parametric equations
   // console.log(
@@ -87,10 +95,42 @@ export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
     [capPath]
   );
 
+  const gradientConfig: GradientOptions = useMemo(
+    () => ({
+      type: "linear" as const,
+      start: { x: 0, y: 0 },
+      end: { x: 0, y: 1 },
+      colorStops: [
+        { offset: 0, color: gradientColor1 },
+        { offset: 1, color: gradientColor2 },
+      ],
+      textureSpace: "local" as const,
+    }),
+    [gradientColor1, gradientColor2]
+  );
+
+  const strokeGradientConfig: GradientOptions = useMemo(
+    () => ({
+      type: "linear" as const,
+      start: { x: 0, y: 0 },
+      end: { x: 0, y: 1 },
+      colorStops: [
+        { offset: 0, color: strokeGradientColor1 },
+        { offset: 1, color: strokeGradientColor2 },
+      ],
+      textureSpace: "local" as const,
+    }),
+    [strokeGradientColor1, strokeGradientColor2]
+  );
+
   const drawCapStroke = useCallback(
     (g: Graphics) => {
       g.clear();
-      g.setStrokeStyle({ color: 0x2ecc71, width: 2 }); // Bright green stroke
+      g.setStrokeStyle({
+        ...g.strokeStyle,
+        width: 2,
+        color: "#AA0000",
+      });
 
       if (capPath.length === 0) return;
 
@@ -104,20 +144,6 @@ export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
       g.stroke();
     },
     [capPath]
-  );
-
-  const gradientConfig: GradientOptions = useMemo(
-    () => ({
-      type: "linear" as const,
-      start: { x: 0, y: 0 },
-      end: { x: 0, y: 1 },
-      colorStops: [
-        { offset: 0, color: gradientColor1 },
-        { offset: 1, color: gradientColor2 },
-      ],
-      textureSpace: "local" as const,
-    }),
-    [gradientColor1, gradientColor2]
   );
 
   const filters = useMemo(
@@ -138,11 +164,14 @@ export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
       {/* Draw fill with managed gradient and filters */}
       <ManagedGraphics
         draw={drawCapFill}
-        gradient={gradientConfig}
+        fillGradient={gradientConfig}
         filters={filters}
       />
-      {/* Draw stroke on top */}
-      <pixiGraphics draw={drawCapStroke} />
+      {/* Draw stroke on top with managed stroke gradient */}
+      <ManagedGraphics
+        draw={drawCapStroke}
+        strokeGradient={strokeGradientConfig}
+      />
     </>
   );
 }

@@ -49,3 +49,14 @@ export const capFilterControls = {
     label: "Blur Amount",
   },
 };
+
+export const capStrokeControls = {
+  strokeGradientColor1: {
+    value: "#f6f6f6ff",
+    label: "Stroke Gradient Color 1",
+  },
+  strokeGradientColor2: {
+    value: "#0021f5ff",
+    label: "Stroke Gradient Color 2",
+  },
+};
