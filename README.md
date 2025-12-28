@@ -9,8 +9,15 @@ A collection of interactive visual effects and animations built with **Pixi.js**
   - **Hello World**: Interactive sprite animation with pointer tracking and blur effects
   - **Meteor**: Dynamic particle system with customizable path following, blur layers, and GSAP animations
   - **Lightning**: Advanced lightning bolt effects with border animation, travel bolts, and procedural generation
+  - **Spotlight**: Spotlight effects with roulette board visualization (DOM & Pixi implementations)
+  - **Cap**: Cap animations and visual effects
+  - **Multiplier Text**: Animated text with multiplier effects and customizable styling
+  - **SVG Parser**: Parse and render SVG files with interactive controls
+  - **Grid Board**: Interactive grid-based game board with cell management
 
-- **Storybook Integration**: Interactive component documentation with full control customization
+- **Dual Rendering Modes**: Many scenes support both Pixi.js (WebGL) and native DOM implementations for experimental of integration between the two.
+
+- **Storybook Integration**: Interactive component documentation with full control customization for key scenes
 
 - **Advanced Graphics Utilities**:
 
@@ -18,6 +25,15 @@ A collection of interactive visual effects and animations built with **Pixi.js**
   - Custom equation-based point generation
   - Multi-layer blur effects with Kawase filters
   - HSL-based color transitions for smooth visual effects
+  - SVG parsing and conversion to Pixi.js graphics
+
+- **Performance Optimizations**: Comprehensive performance checklist and guidelines for WebGL rendering
+
+- **Developer Tools Integration**:
+
+  - Pixi.js DevTools support for debugging
+  - Pixi Stats for real-time performance monitoring
+  - Layout management with @pixi/layout
 
 - **Responsive Design**: Automatically adapts to viewport size changes, including mobile virtual keyboard detection
 
@@ -28,12 +44,17 @@ A collection of interactive visual effects and animations built with **Pixi.js**
 - **React 19** with TypeScript
 - **Pixi.js 8** for high-performance 2D WebGL rendering
 - **@pixi/react** for declarative Pixi.js components
+- **@pixi/devtools** for development debugging
+- **@pixi/layout** for layout management
 - **GSAP** for advanced animations and easing
 - **pixi-filters** for visual effects
+- **pixi-stats** for performance monitoring
 - **Vite** for fast development and building
 - **Leva** for GUI controls
 - **Storybook 10** for component documentation and testing
 - **Zustand** for state management
+- **React Router** for navigation
+- **svg-pathdata** for SVG path parsing and manipulation
 
 ## 🌐 Demo
 
@@ -63,10 +84,19 @@ npm run deploy
 
 ```
 src/
-├── components/      # UI components (Scene, SceneButtonList)
+├── components/      # UI components (Scene, GlobalControls)
 ├── scenes/          # Individual scene implementations
+│   ├── hello-world/
+│   ├── meteor/
+│   ├── lightning/
+│   ├── spotlight/
+│   ├── cap/
+│   ├── multiplier-text/
+│   ├── svg-parser/
+│   └── grid-board/
+├── stores/          # Zustand state management
 ├── utils/
-│   ├── graphics/   # Graphics utilities (path generation, drawing helpers)
+│   ├── graphics/   # Graphics utilities (path generation, SVG parsing, drawing helpers)
 │   └── hooks/      # Custom React hooks (viewport, scene size)
 └── types/          # TypeScript type definitions
 ```
@@ -80,5 +110,9 @@ This project serves as a reference for:
 - Building reusable graphics utilities
 - Implementing parametric curve rendering
 - Managing complex visual effects with multiple layers
+- Comparing Pixi.js (WebGL) vs native DOM rendering performance
+- Parsing and rendering SVG graphics with Pixi.js
 - Setting up Storybook with Pixi.js components
 - Separating development and production control interfaces (Leva vs Storybook)
+- Performance optimization strategies for WebGL rendering
+- Using Pixi.js DevTools for debugging graphics applications
