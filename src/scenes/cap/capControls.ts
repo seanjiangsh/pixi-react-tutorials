@@ -51,12 +51,24 @@ export const capFilterControls = {
 };
 
 export const capStrokeControls = {
+  strokeMode: {
+    value: "gradient",
+    options: ["color", "gradient"],
+    label: "Stroke Mode",
+  },
+  strokeColor: {
+    value: "#2ecc71",
+    label: "Stroke Color",
+    render: (get: any) => get("strokeMode") === "color",
+  },
   strokeGradientColor1: {
     value: "#f6f6f6ff",
     label: "Stroke Gradient Color 1",
+    render: (get: any) => get("strokeMode") === "gradient",
   },
   strokeGradientColor2: {
     value: "#0021f5ff",
     label: "Stroke Gradient Color 2",
+    render: (get: any) => get("strokeMode") === "gradient",
   },
 };

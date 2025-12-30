@@ -19,7 +19,7 @@ export type FilterConfig<T extends Filter = Filter> = {
 interface ManagedGraphicsProps {
   draw: (g: Graphics) => void;
   fillGradient?: GradientOptions;
-  strokeGradient?: GradientOptions;
+  stroke?: GradientOptions | string | number;
   filters?: FilterConfig[];
 }
 
@@ -52,11 +52,14 @@ interface ManagedGraphicsProps {
  *   colorStops: [{ offset: 0, color: 0xffffff }, { offset: 1, color: 0x0000ff }]
  * }), []);
  *
- * // Draw function using strokeGradient
+ * // Or use a color
+ * const strokeColor = 0xff0000; // or "#ff0000"
+ *
+ * // Draw function using stroke
  * const drawStroke = useCallback((g: Graphics) => {
  *   g.clear();
- *   // IMPORTANT: Spread g.strokeStyle to preserve the gradient fill
- *   g.setStrokeStyle({ ...g.strokeStyle, width: 2, color: 0x2ecc71 });
+ *   // IMPORTANT: Spread g.strokeStyle to preserve the stroke fill
+ *   g.setStrokeStyle({ ...g.strokeStyle, width: 2 });
  *   g.moveTo(0, 0);
  *   g.lineTo(100, 100);
  *   g.stroke();
@@ -65,14 +68,13 @@ interface ManagedGraphicsProps {
  * <ManagedGraphics
  *   draw={drawCallback}
  *   fillGradient={fillGradientConfig}
- *   strokeGradient={strokeGradientConfig}
+ *   stroke={strokeGradientConfig} // or stroke={strokeColor}
  *   filters={filters}
  * />
  * ```
  */
 export function ManagedGraphics(props: ManagedGraphicsProps) {
-  const { draw, fillGradient, strokeGradient, filters, ...remainedprops } =
-    props;
+  const { draw, fillGradient, stroke, filters, ...remainedprops } = props;
   const fillGradientRef = useRef<FillGradient | null>(null);
   const strokeGradientRef = useRef<FillGradient | null>(null);
   const filtersRef = useRef<Filter[] | null>(null);
@@ -80,7 +82,9 @@ export function ManagedGraphics(props: ManagedGraphicsProps) {
     undefined
   );
   const prevFillGradientRef = useRef<GradientOptions | undefined>(undefined);
-  const prevStrokeGradientRef = useRef<GradientOptions | undefined>(undefined);
+  const prevStrokeRef = useRef<GradientOptions | string | number | undefined>(
+    undefined
+  );
   const prevFiltersRef = useRef<FilterConfig[] | undefined>(undefined);
 
   // Cleanup on unmount
@@ -119,27 +123,35 @@ export function ManagedGraphics(props: ManagedGraphicsProps) {
         prevFillGradientRef.current = fillGradient;
       }
 
-      /** Stroke Gradient Management */
-      if (strokeGradient !== prevStrokeGradientRef.current) {
-        // Destroy old stroke gradient
+      /** Stroke Management (Gradient or Color) */
+      if (stroke !== prevStrokeRef.current) {
+        // Destroy old stroke gradient if it exists
         if (strokeGradientRef.current) {
           strokeGradientRef.current.destroy();
           strokeGradientRef.current = null;
         }
 
-        // Create new stroke gradient if config provided
-        if (strokeGradient)
-          strokeGradientRef.current = new FillGradient(strokeGradient);
+        // Check if stroke is a gradient config (object with type property) or a color
+        if (stroke && typeof stroke === "object" && "type" in stroke) {
+          // It's a gradient config
+          strokeGradientRef.current = new FillGradient(stroke);
+        }
+        // If it's a string or number, it's handled directly in setStrokeStyle below
 
-        prevStrokeGradientRef.current = strokeGradient;
+        prevStrokeRef.current = stroke;
       }
 
-      // Apply gradients before drawing
+      // Apply gradients/colors before drawing
       if (fillGradientRef.current) {
         g.setFillStyle(fillGradientRef.current);
       }
       if (strokeGradientRef.current) {
         g.setStrokeStyle({ fill: strokeGradientRef.current });
+      } else if (
+        stroke &&
+        (typeof stroke === "string" || typeof stroke === "number")
+      ) {
+        g.setStrokeStyle({ color: stroke });
       }
 
       /** Filters Management */
@@ -167,7 +179,7 @@ export function ManagedGraphics(props: ManagedGraphicsProps) {
       // Call original draw function with gradient refs available in closure
       draw(g);
     },
-    [draw, fillGradient, strokeGradient, filters]
+    [draw, fillGradient, stroke, filters]
   );
 
   return (

@@ -4,11 +4,7 @@ import { extend } from "@pixi/react";
 import { useControls } from "leva";
 
 import { genPointsByEquation } from "src/utils/graphics/misc";
-import {
-  capFillControls,
-  capFilterControls,
-  capStrokeControls,
-} from "./capControls";
+import { capFillControls, capFilterControls } from "./capControls";
 import { ManagedGraphics } from "src/utils/graphics/ManagedGraphics";
 
 extend({ Graphics });
@@ -26,10 +22,31 @@ export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
     capFillControls
   );
   const { blurAmount } = useControls("Filters", capFilterControls);
-  const { strokeGradientColor1, strokeGradientColor2 } = useControls(
-    "Stroke",
-    capStrokeControls
-  );
+  const strokeControls = useControls("Stroke", {
+    strokeMode: {
+      value: "gradient",
+      options: ["color", "gradient"],
+      label: "Stroke Mode",
+    },
+    strokeColor: {
+      value: "#2ecc71",
+      label: "Stroke Color",
+    },
+    strokeGradientColor1: {
+      value: "#f6f6f6ff",
+      label: "Stroke Gradient Color 1",
+    },
+    strokeGradientColor2: {
+      value: "#0021f5ff",
+      label: "Stroke Gradient Color 2",
+    },
+  });
+  const {
+    strokeMode,
+    strokeColor,
+    strokeGradientColor1,
+    strokeGradientColor2,
+  } = strokeControls;
 
   // Generate cap path using parametric equations
   // console.log(
@@ -123,13 +140,17 @@ export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
     [strokeGradientColor1, strokeGradientColor2]
   );
 
+  const strokeConfig = useMemo(
+    () => (strokeMode === "gradient" ? strokeGradientConfig : strokeColor),
+    [strokeMode, strokeGradientConfig, strokeColor]
+  );
+
   const drawCapStroke = useCallback(
     (g: Graphics) => {
       g.clear();
       g.setStrokeStyle({
         ...g.strokeStyle,
         width: 2,
-        color: "#AA0000",
       });
 
       if (capPath.length === 0) return;
@@ -167,11 +188,8 @@ export function CapGfx({ D, w, m, yThreshold = D * 0.01 }: CapGfxProps) {
         fillGradient={gradientConfig}
         filters={filters}
       />
-      {/* Draw stroke on top with managed stroke gradient */}
-      <ManagedGraphics
-        draw={drawCapStroke}
-        strokeGradient={strokeGradientConfig}
-      />
+      {/* Draw stroke on top with managed stroke */}
+      <ManagedGraphics draw={drawCapStroke} stroke={strokeConfig} />
     </>
   );
 }
