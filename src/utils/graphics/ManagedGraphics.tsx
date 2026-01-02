@@ -6,7 +6,7 @@ import {
   GradientOptions,
   FilterOptions,
 } from "pixi.js";
-import { extend } from "@pixi/react";
+import { extend, PixiReactElementProps } from "@pixi/react";
 
 extend({ Graphics });
 
@@ -16,12 +16,15 @@ export type FilterConfig<T extends Filter = Filter> = {
   options?: FilterOptions;
 };
 
-interface ManagedGraphicsProps {
+type ManagedGraphicsProps = Omit<
+  PixiReactElementProps<typeof Graphics>,
+  "filters"
+> & {
   draw: (g: Graphics) => void;
   fillGradient?: GradientOptions;
   stroke?: GradientOptions | string | number;
   filters?: FilterConfig[];
-}
+};
 
 /**
  * A managed Graphics component that handles FillGradient and filter lifecycle.

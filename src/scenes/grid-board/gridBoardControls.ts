@@ -26,47 +26,51 @@ export const gridBoardControls = {
   },
 };
 
-export const filterControls = {
-  blur: {
-    value: 0.1,
-    min: 0,
-    max: 5,
-    step: 0.1,
-    label: "Blur Strength",
+export const shadowControls = {
+  shadowType: {
+    value: "inner" as "inner" | "outer",
+    options: ["inner", "outer"],
+    label: "Shadow Type",
   },
-  blurOpacity: {
-    value: 0.8,
+  shadowGradientType: {
+    value: "concentric" as "concentric" | "linear",
+    options: ["linear", "concentric"],
+    label: "Gradient Type",
+  },
+  shadowLineCount: {
+    value: 5,
+    min: 1,
+    max: 20,
+    step: 1,
+    label: "Shadow Line Count",
+  },
+  shadowExtendDistance: {
+    value: 8,
+    min: 1,
+    max: 30,
+    step: 0.5,
+    label: "Shadow Extend Distance",
+  },
+  shadowColorStart: {
+    value: "#00ffff",
+    label: "Shadow Color Start",
+  },
+  shadowColorEnd: {
+    value: "#0088ff",
+    label: "Shadow Color End",
+  },
+  shadowBlur: {
+    value: 5,
+    min: 0,
+    max: 10,
+    step: 0.1,
+    label: "Shadow Blur Strength",
+  },
+  shadowOpacity: {
+    value: 0.6,
     min: 0,
     max: 1,
     step: 0.01,
-    label: "Blur Layer Opacity",
-  },
-  glowDistance: {
-    value: 1,
-    min: 0,
-    max: 5,
-    step: 0.1,
-    label: "Glow Distance",
-  },
-  glowOuterStrength: {
-    value: 2,
-    min: 0,
-    max: 10,
-    step: 0.1,
-    label: "Glow Outer Strength",
-  },
-  glowInnerStrength: {
-    value: 0,
-    min: 0,
-    max: 10,
-    step: 0.1,
-    label: "Glow Inner Strength",
-  },
-  glowQuality: {
-    value: 0.5,
-    min: 0.1,
-    max: 1,
-    step: 0.1,
-    label: "Glow Quality",
+    label: "Shadow Opacity",
   },
 };
