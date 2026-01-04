@@ -1,18 +1,18 @@
-import type { Point2D } from "src/types/types";
+import type { PointData } from "pixi.js";
 
 export type BoardBounds = {
-  topLeft: Point2D;
-  topRight: Point2D;
-  bottomRight: Point2D;
-  bottomLeft: Point2D;
+  topLeft: PointData;
+  topRight: PointData;
+  bottomRight: PointData;
+  bottomLeft: PointData;
 };
 
 export type CellCorners = {
-  topLeft: Point2D;
-  topRight: Point2D;
-  bottomRight: Point2D;
-  bottomLeft: Point2D;
-  center: Point2D;
+  topLeft: PointData;
+  topRight: PointData;
+  bottomRight: PointData;
+  bottomLeft: PointData;
+  center: PointData;
   width: number;
   height: number;
 };

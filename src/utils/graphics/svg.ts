@@ -1,8 +1,9 @@
-import { Graphics } from "pixi.js";
+import { Graphics, PointData } from "pixi.js";
 
 import { SVGCommand } from "./svgParser";
+import { SVG_COMMAND_TYPES } from "./svgCommandTypes";
 
-export type PointTransform = (x: number, y: number) => { x: number; y: number };
+export type PointTransform = (x: number, y: number) => PointData;
 
 /**
  * Transforms all points in SVG commands array using the provided transform function
@@ -20,30 +21,38 @@ export function transformSVGCommands(
   return commands.map((cmd) => {
     const coords = { ...cmd.coords };
 
-    switch (cmd.typeName) {
-      case "MOVE_TO":
-      case "LINE_TO": {
+    switch (cmd.type) {
+      case SVG_COMMAND_TYPES.MOVE_TO:
+      case SVG_COMMAND_TYPES.LINE_TO: {
         currentX = coords.x;
         currentY = coords.y;
         const p = transformPoint(coords.x, coords.y);
         return { ...cmd, coords: { x: p.x, y: p.y } };
       }
 
-      case "HORIZ_LINE_TO": {
+      case SVG_COMMAND_TYPES.HORIZ_LINE_TO: {
         currentX = coords.x;
         // Need both x and y for transform, convert to LINE_TO
         const p = transformPoint(currentX, currentY);
-        return { ...cmd, typeName: "LINE_TO", coords: { x: p.x, y: p.y } };
+        return {
+          ...cmd,
+          type: SVG_COMMAND_TYPES.LINE_TO,
+          coords: { x: p.x, y: p.y },
+        };
       }
 
-      case "VERT_LINE_TO": {
+      case SVG_COMMAND_TYPES.VERT_LINE_TO: {
         currentY = coords.y;
         // Need both x and y for transform, convert to LINE_TO
         const p = transformPoint(currentX, currentY);
-        return { ...cmd, typeName: "LINE_TO", coords: { x: p.x, y: p.y } };
+        return {
+          ...cmd,
+          type: SVG_COMMAND_TYPES.LINE_TO,
+          coords: { x: p.x, y: p.y },
+        };
       }
 
-      case "CURVE_TO": {
+      case SVG_COMMAND_TYPES.CURVE_TO: {
         const p1 = transformPoint(coords.x1, coords.y1);
         const p2 = transformPoint(coords.x2, coords.y2);
         const p = transformPoint(coords.x, coords.y);
@@ -62,7 +71,7 @@ export function transformSVGCommands(
         };
       }
 
-      case "SMOOTH_CURVE_TO": {
+      case SVG_COMMAND_TYPES.SMOOTH_CURVE_TO: {
         const p2 = transformPoint(coords.x2, coords.y2);
         const p = transformPoint(coords.x, coords.y);
         currentX = coords.x;
@@ -73,7 +82,7 @@ export function transformSVGCommands(
         };
       }
 
-      case "QUAD_TO": {
+      case SVG_COMMAND_TYPES.QUAD_TO: {
         const cp = transformPoint(coords.x1, coords.y1);
         const p = transformPoint(coords.x, coords.y);
         currentX = coords.x;
@@ -84,14 +93,14 @@ export function transformSVGCommands(
         };
       }
 
-      case "SMOOTH_QUAD_TO": {
+      case SVG_COMMAND_TYPES.SMOOTH_QUAD_TO: {
         const p = transformPoint(coords.x, coords.y);
         currentX = coords.x;
         currentY = coords.y;
         return { ...cmd, coords: { x: p.x, y: p.y } };
       }
 
-      case "ARC": {
+      case SVG_COMMAND_TYPES.ARC: {
         const p = transformPoint(coords.x, coords.y);
         currentX = coords.x;
         currentY = coords.y;
@@ -101,7 +110,7 @@ export function transformSVGCommands(
         };
       }
 
-      case "CLOSE_PATH":
+      case SVG_COMMAND_TYPES.CLOSE_PATH:
         return cmd;
 
       default:
@@ -130,8 +139,8 @@ export function drawSVGPath(
   commands.forEach((cmd) => {
     const coords = cmd.coords;
 
-    switch (cmd.typeName) {
-      case "MOVE_TO": {
+    switch (cmd.type) {
+      case SVG_COMMAND_TYPES.MOVE_TO: {
         currentX = coords.x;
         currentY = coords.y;
         const p = transform(currentX, currentY);
@@ -139,7 +148,7 @@ export function drawSVGPath(
         break;
       }
 
-      case "LINE_TO": {
+      case SVG_COMMAND_TYPES.LINE_TO: {
         currentX = coords.x;
         currentY = coords.y;
         const p = transform(currentX, currentY);
@@ -147,21 +156,21 @@ export function drawSVGPath(
         break;
       }
 
-      case "HORIZ_LINE_TO": {
+      case SVG_COMMAND_TYPES.HORIZ_LINE_TO: {
         currentX = coords.x;
         const p = transform(currentX, currentY);
         g.lineTo(p.x, p.y);
         break;
       }
 
-      case "VERT_LINE_TO": {
+      case SVG_COMMAND_TYPES.VERT_LINE_TO: {
         currentY = coords.y;
         const p = transform(currentX, currentY);
         g.lineTo(p.x, p.y);
         break;
       }
 
-      case "CURVE_TO": {
+      case SVG_COMMAND_TYPES.CURVE_TO: {
         const p1 = transform(coords.x1, coords.y1);
         const p2 = transform(coords.x2, coords.y2);
         const p = transform(coords.x, coords.y);
@@ -171,7 +180,7 @@ export function drawSVGPath(
         break;
       }
 
-      case "SMOOTH_CURVE_TO": {
+      case SVG_COMMAND_TYPES.SMOOTH_CURVE_TO: {
         const p2 = transform(coords.x2, coords.y2);
         const p = transform(coords.x, coords.y);
         currentX = coords.x;
@@ -180,7 +189,7 @@ export function drawSVGPath(
         break;
       }
 
-      case "QUAD_TO": {
+      case SVG_COMMAND_TYPES.QUAD_TO: {
         const cp = transform(coords.x1, coords.y1);
         const p = transform(coords.x, coords.y);
         currentX = coords.x;
@@ -189,7 +198,7 @@ export function drawSVGPath(
         break;
       }
 
-      case "SMOOTH_QUAD_TO": {
+      case SVG_COMMAND_TYPES.SMOOTH_QUAD_TO: {
         const p = transform(coords.x, coords.y);
         currentX = coords.x;
         currentY = coords.y;
@@ -197,16 +206,49 @@ export function drawSVGPath(
         break;
       }
 
-      case "ARC": {
-        // Arc is complex, approximate with lines
-        const p = transform(coords.x, coords.y);
+      case SVG_COMMAND_TYPES.ARC: {
+        // Use pre-computed arc center and angles if available
+        if (
+          coords.cx !== undefined &&
+          coords.cy !== undefined &&
+          coords.startAngle !== undefined &&
+          coords.endAngle !== undefined
+        ) {
+          const radius = coords.rX || 0;
+          const center = transform(coords.cx, coords.cy);
+          const startPoint = transform(currentX, currentY);
+          const endPoint = transform(coords.x, coords.y);
+
+          // Recalculate angles based on transformed points
+          const actualStartAngle = Math.atan2(
+            startPoint.y - center.y,
+            startPoint.x - center.x
+          );
+          const actualEndAngle = Math.atan2(
+            endPoint.y - center.y,
+            endPoint.x - center.x
+          );
+
+          // Draw arc
+          g.arc(
+            center.x,
+            center.y,
+            radius,
+            actualStartAngle,
+            actualEndAngle,
+            false
+          );
+        } else {
+          // Fallback to line for arcs without pre-computed data
+          const endPoint = transform(coords.x, coords.y);
+          g.lineTo(endPoint.x, endPoint.y);
+        }
         currentX = coords.x;
         currentY = coords.y;
-        g.lineTo(p.x, p.y);
         break;
       }
 
-      case "CLOSE_PATH": {
+      case SVG_COMMAND_TYPES.CLOSE_PATH: {
         g.closePath();
         break;
       }

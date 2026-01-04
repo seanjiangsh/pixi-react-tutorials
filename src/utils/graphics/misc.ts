@@ -1,9 +1,9 @@
-import { Point2D } from "src/types/types";
+import { PointData } from "pixi.js";
 import { memoize } from "./memoize";
 
 type GeneratePointsByEquationParams = {
-  origin?: Point2D;
-  equation: (t: number) => Point2D;
+  origin?: PointData;
+  equation: (t: number) => PointData;
   tStart?: number;
   tEnd: number;
   segments: number;
@@ -12,7 +12,7 @@ type GeneratePointsByEquationParams = {
 };
 
 export type GeneratedPoints = Array<
-  Point2D & { tangent: { dx: number; dy: number } }
+  PointData & { tangent: { dx: number; dy: number } }
 >;
 
 // Internal non-memoized implementation

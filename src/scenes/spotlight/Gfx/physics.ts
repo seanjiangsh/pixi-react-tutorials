@@ -1,9 +1,9 @@
-import type { Point2D } from "src/types/types";
+import type { PointData } from "pixi.js";
 import type { CellCorners } from "./geometry";
 
 export type Spotlight = {
-  position: Point2D;
-  velocity: Point2D;
+  position: PointData;
+  velocity: PointData;
   radius: number;
 };
 
@@ -21,10 +21,10 @@ type SpotlightPhysicsParams = {
   acceleration: number;
   friction: number;
   boardBounds: {
-    topLeft: Point2D;
-    topRight: Point2D;
-    bottomRight: Point2D;
-    bottomLeft: Point2D;
+    topLeft: PointData;
+    topRight: PointData;
+    bottomRight: PointData;
+    bottomLeft: PointData;
   };
   assignedCells?: number[];
   cellCornersCache?: Map<number, CellCorners>;
@@ -197,10 +197,10 @@ export function createSpotlights(
   radius: number,
   maxSpeed: number,
   boardBounds: {
-    topLeft: Point2D;
-    topRight: Point2D;
-    bottomRight: Point2D;
-    bottomLeft: Point2D;
+    topLeft: PointData;
+    topRight: PointData;
+    bottomRight: PointData;
+    bottomLeft: PointData;
   }
 ): Spotlight[] {
   const { topLeft, topRight, bottomRight, bottomLeft } = boardBounds;

@@ -1,9 +1,17 @@
 import { SVGPathData as SVGPathDataParser } from "svg-pathdata";
 
 export interface SVGCommand {
-  type: string;
-  typeName: string;
+  type: number;
   coords: Record<string, number>;
+  // For rounded rectangles, store the original rect params
+  isRoundedRect?: boolean;
+  rectParams?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    radius: number;
+  };
 }
 
 export interface SVGPathData {
@@ -55,20 +63,6 @@ function analyzePathData(pathString: string): {
   let currentY = 0;
 
   const svgCommands: SVGCommand[] = [];
-
-  // Map of command type numbers to names
-  const commandTypeNames: Record<number, string> = {
-    [SVGPathDataParser.MOVE_TO]: "MOVE_TO",
-    [SVGPathDataParser.LINE_TO]: "LINE_TO",
-    [SVGPathDataParser.HORIZ_LINE_TO]: "HORIZ_LINE_TO",
-    [SVGPathDataParser.VERT_LINE_TO]: "VERT_LINE_TO",
-    [SVGPathDataParser.CURVE_TO]: "CURVE_TO",
-    [SVGPathDataParser.SMOOTH_CURVE_TO]: "SMOOTH_CURVE_TO",
-    [SVGPathDataParser.QUAD_TO]: "QUAD_TO",
-    [SVGPathDataParser.SMOOTH_QUAD_TO]: "SMOOTH_QUAD_TO",
-    [SVGPathDataParser.ARC]: "ARC",
-    [SVGPathDataParser.CLOSE_PATH]: "CLOSE_PATH",
-  };
 
   commands.forEach((command) => {
     if (command.type === SVGPathDataParser.CLOSE_PATH) {
@@ -135,8 +129,7 @@ function analyzePathData(pathString: string): {
     if ("sweepFlag" in command) coords.sweepFlag = command.sweepFlag;
 
     svgCommands.push({
-      type: command.type.toString(),
-      typeName: commandTypeNames[command.type] ?? "UNKNOWN",
+      type: command.type,
       coords,
     });
   });
@@ -210,29 +203,134 @@ export function parseSVG(svgText: string, minimal: boolean = false): ParsedSVG {
     }
   });
 
-  // Get rect elements and convert them to paths
+  // Get rect elements - for rounded rects, store metadata for PixiJS roundRect
   svgDoc.querySelectorAll("rect").forEach((rectElement) => {
     const x = parseFloat(rectElement.getAttribute("x") ?? "0");
     const y = parseFloat(rectElement.getAttribute("y") ?? "0");
     const width = parseFloat(rectElement.getAttribute("width") ?? "0");
     const height = parseFloat(rectElement.getAttribute("height") ?? "0");
+    const rx = parseFloat(rectElement.getAttribute("rx") ?? "0");
+    const ry = parseFloat(rectElement.getAttribute("ry") ?? rx.toString());
     const transform = rectElement.getAttribute("transform");
     const stroke = rectElement.getAttribute("stroke") ?? undefined;
     const strokeWidth = parseFloat(
       rectElement.getAttribute("stroke-width") ?? "1"
     );
 
-    // Convert rect to path
-    const rectPath = convertRectToPath(x, y, width, height, transform);
-    const { isClosed, bounds, center, commands } = analyzePathData(rectPath);
-    paths.push({
-      ...(minimal ? {} : { path: rectPath }),
-      ...(minimal ? {} : { stroke, strokeWidth }),
-      isClosed,
-      bounds,
-      center,
-      commands,
-    });
+    // For rounded rectangles, create bezier curve commands for proper perspective rendering
+    if (rx > 0 && ry > 0 && rx === ry && !transform) {
+      const radius = Math.min(rx, width / 2, height / 2);
+      const bounds = { x, y, width, height };
+      const center = {
+        x: x + width / 2,
+        y: y + height / 2,
+      };
+
+      // Magic number for approximating a quarter circle with a cubic bezier curve
+      const kappa = 0.5522847498;
+      const controlDist = radius * kappa;
+
+      // Create commands with bezier curves for rounded corners
+      const commands: SVGCommand[] = [
+        // Start at top-left after radius
+        { type: 2, coords: { x: x + radius, y } }, // MOVE_TO
+
+        // Top edge
+        { type: 16, coords: { x: x + width - radius, y } }, // LINE_TO
+
+        // Top-right corner: bezier curve from (x+width-radius, y) to (x+width, y+radius)
+        {
+          type: 32, // CURVE_TO
+          coords: {
+            x1: x + width - radius + controlDist,
+            y1: y,
+            x2: x + width,
+            y2: y + radius - controlDist,
+            x: x + width,
+            y: y + radius,
+          },
+        },
+
+        // Right edge
+        { type: 16, coords: { x: x + width, y: y + height - radius } },
+
+        // Bottom-right corner: bezier curve from (x+width, y+height-radius) to (x+width-radius, y+height)
+        {
+          type: 32, // CURVE_TO
+          coords: {
+            x1: x + width,
+            y1: y + height - radius + controlDist,
+            x2: x + width - radius + controlDist,
+            y2: y + height,
+            x: x + width - radius,
+            y: y + height,
+          },
+        },
+
+        // Bottom edge
+        { type: 16, coords: { x: x + radius, y: y + height } },
+
+        // Bottom-left corner: bezier curve from (x+radius, y+height) to (x, y+height-radius)
+        {
+          type: 32, // CURVE_TO
+          coords: {
+            x1: x + radius - controlDist,
+            y1: y + height,
+            x2: x,
+            y2: y + height - radius + controlDist,
+            x,
+            y: y + height - radius,
+          },
+        },
+
+        // Left edge
+        { type: 16, coords: { x, y: y + radius } },
+
+        // Top-left corner: bezier curve from (x, y+radius) to (x+radius, y)
+        {
+          type: 32, // CURVE_TO
+          coords: {
+            x1: x,
+            y1: y + radius - controlDist,
+            x2: x + radius - controlDist,
+            y2: y,
+            x: x + radius,
+            y,
+          },
+        },
+
+        // Close path
+        { type: 1, coords: {} },
+      ];
+
+      paths.push({
+        ...(minimal ? {} : { stroke, strokeWidth }),
+        isClosed: true,
+        bounds,
+        center,
+        commands,
+      });
+    } else {
+      // Convert rect to path
+      const rectPath = convertRectToPath(
+        x,
+        y,
+        width,
+        height,
+        rx,
+        ry,
+        transform
+      );
+      const { isClosed, bounds, center, commands } = analyzePathData(rectPath);
+      paths.push({
+        ...(minimal ? {} : { path: rectPath }),
+        ...(minimal ? {} : { stroke, strokeWidth }),
+        isClosed,
+        bounds,
+        center,
+        commands,
+      });
+    }
   });
 
   // Group paths by closed/open status
@@ -250,47 +348,74 @@ export function parseSVG(svgText: string, minimal: boolean = false): ParsedSVG {
 
 /**
  * Converts a rect element to an SVG path string
+ * Supports rounded corners via rx and ry attributes
  */
 function convertRectToPath(
   x: number,
   y: number,
   width: number,
   height: number,
+  rx: number = 0,
+  ry: number = 0,
   transform?: string | null
 ): string {
-  let rectPath = `M ${x} ${y} L ${x + width} ${y} L ${x + width} ${
-    y + height
-  } L ${x} ${y + height} Z`;
+  // Clamp corner radii to half of width/height
+  rx = Math.min(rx, width / 2);
+  ry = Math.min(ry, height / 2);
 
-  // Handle rotation transform
-  if (transform?.includes("rotate")) {
-    const match = transform.match(/rotate\(([^)]+)\)/);
-    if (match) {
-      const [angle, cx, cy] = match[1].split(/\s+/).map(parseFloat);
-      if (angle === -90 || angle === 270) {
-        const corners = [
-          { x: 0, y: 0 },
-          { x: width, y: 0 },
-          { x: width, y: height },
-          { x: 0, y: height },
-        ];
+  // If no rounded corners, use simple rectangle
+  if (rx === 0 && ry === 0) {
+    let rectPath = `M ${x} ${y} L ${x + width} ${y} L ${x + width} ${
+      y + height
+    } L ${x} ${y + height} Z`;
 
-        const rotated = corners.map((point) => {
-          const rad = (angle * Math.PI) / 180;
-          const cos = Math.cos(rad);
-          const sin = Math.sin(rad);
-          return {
-            x: cx + (point.x * cos - point.y * sin),
-            y: cy + (point.x * sin + point.y * cos),
-          };
-        });
+    // Handle rotation transform
+    if (transform?.includes("rotate")) {
+      const match = transform.match(/rotate\(([^)]+)\)/);
+      if (match) {
+        const [angle, cx, cy] = match[1].split(/\s+/).map(parseFloat);
+        if (angle === -90 || angle === 270) {
+          const corners = [
+            { x: 0, y: 0 },
+            { x: width, y: 0 },
+            { x: width, y: height },
+            { x: 0, y: height },
+          ];
 
-        rectPath = `M ${rotated[0].x} ${rotated[0].y} L ${rotated[1].x} ${rotated[1].y} L ${rotated[2].x} ${rotated[2].y} L ${rotated[3].x} ${rotated[3].y} Z`;
+          const rotated = corners.map((point) => {
+            const rad = (angle * Math.PI) / 180;
+            const cos = Math.cos(rad);
+            const sin = Math.sin(rad);
+            return {
+              x: cx + (point.x * cos - point.y * sin),
+              y: cy + (point.x * sin + point.y * cos),
+            };
+          });
+
+          rectPath = `M ${rotated[0].x} ${rotated[0].y} L ${rotated[1].x} ${rotated[1].y} L ${rotated[2].x} ${rotated[2].y} L ${rotated[3].x} ${rotated[3].y} Z`;
+        }
       }
     }
+
+    return rectPath;
   }
 
-  return rectPath;
+  // Generate path with rounded corners using arcs
+  // The arc center and angles will be computed during parsing by analyzePathData
+  const path = [
+    `M ${x + rx} ${y}`,
+    `L ${x + width - rx} ${y}`,
+    `A ${rx} ${ry} 0 0 1 ${x + width} ${y + ry}`,
+    `L ${x + width} ${y + height - ry}`,
+    `A ${rx} ${ry} 0 0 1 ${x + width - rx} ${y + height}`,
+    `L ${x + rx} ${y + height}`,
+    `A ${rx} ${ry} 0 0 1 ${x} ${y + height - ry}`,
+    `L ${x} ${y + ry}`,
+    `A ${rx} ${ry} 0 0 1 ${x + rx} ${y}`,
+    `Z`,
+  ].join(" ");
+
+  return path;
 }
 
 /**

@@ -3,7 +3,7 @@ import { Graphics } from "pixi.js";
 import { extend, useTick } from "@pixi/react";
 import { GlowFilter } from "pixi-filters";
 
-import type { Point2D } from "src/types/types";
+import type { PointData } from "pixi.js";
 import { genLightningWithBranches } from "src/utils/graphics/path";
 
 extend({ Graphics });
@@ -20,7 +20,7 @@ type LightningTravelGfxProps = {
   branchLength?: number;
   travelDuration?: number; // Duration in seconds for the bolt to travel
   seed?: number; // Seed for generating different bolt variations
-  onConnect?: (point: Point2D) => void; // Callback when bolt connects
+  onConnect?: (point: PointData) => void; // Callback when bolt connects
 };
 
 export function LightningTravelGfx(props: LightningTravelGfxProps) {
@@ -42,8 +42,8 @@ export function LightningTravelGfx(props: LightningTravelGfxProps) {
   const [progress, setProgress] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [boltData, setBoltData] = useState<{
-    main: Point2D[];
-    branches: Point2D[][];
+    main: PointData[];
+    branches: PointData[][];
   } | null>(null);
 
   // Helper to get cell corners in canvas coordinates
@@ -134,8 +134,8 @@ export function LightningTravelGfx(props: LightningTravelGfxProps) {
 
       // Find the shortest distance between any two points
       let minDistance = Infinity;
-      let bestStart: Point2D = fromCorners.center;
-      let bestEnd: Point2D = toCorners.center;
+      let bestStart: PointData = fromCorners.center;
+      let bestEnd: PointData = toCorners.center;
 
       for (const fromPoint of fromPoints) {
         for (const toPoint of toPoints) {

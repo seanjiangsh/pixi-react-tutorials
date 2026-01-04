@@ -3,7 +3,7 @@ import { Graphics } from "pixi.js";
 import { extend, useTick } from "@pixi/react";
 import { GlowFilter } from "pixi-filters";
 
-import { type Point2D } from "src/types/types";
+import { type PointData } from "pixi.js";
 import { genLightningPath, type LightningBolt } from "src/utils/graphics/path";
 
 extend({ Graphics });
@@ -46,8 +46,8 @@ export function LightningGfx(props: LighteningGraphicsProps) {
 
   const boltStructures = useMemo<SegmentPoint[][]>(() => {
     const structures: SegmentPoint[][] = [];
-    const start: Point2D = { x: width / 2, y: height * 0.1 };
-    const end: Point2D = { x: width / 2, y: height * 0.9 };
+    const start: PointData = { x: width / 2, y: height * 0.1 };
+    const end: PointData = { x: width / 2, y: height * 0.9 };
 
     for (let i = 0; i < boltAmount; i++) {
       const baseSeed = regenerateKey * 10000 + 12345 + i * 1000;
@@ -209,7 +209,7 @@ export function LightningGfx(props: LighteningGraphicsProps) {
       const baseSeed = regenerateKey * 10000 + 12345 + boltIndex * 1000;
 
       // Get animated segment positions
-      const animatedSegments: Point2D[] = segments.map((seg, segIndex) => {
+      const animatedSegments: PointData[] = segments.map((seg, segIndex) => {
         const state = boltStates[segIndex] || {
           offsetX: 0,
           offsetY: 0,
@@ -224,7 +224,7 @@ export function LightningGfx(props: LighteningGraphicsProps) {
       });
 
       // Draw jagged lightning between segment points
-      const allPoints: Point2D[] = [];
+      const allPoints: PointData[] = [];
       for (let i = 0; i < animatedSegments.length - 1; i++) {
         const jaggedPath = genLightningPath({
           start: animatedSegments[i],

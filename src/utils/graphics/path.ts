@@ -1,7 +1,7 @@
-import { type Point2D } from "src/types/types";
 import { type GeneratedPoints } from "src/utils/graphics/misc";
 import { genPointsByEquation } from "src/utils/graphics/misc";
 import { memoize } from "./memoize";
+import { PointData } from "pixi.js";
 
 // Utility functions for path calculations
 
@@ -9,7 +9,7 @@ import { memoize } from "./memoize";
 function genCirclePathImpl(params: {
   radius: number;
   segments?: number;
-  origin?: Point2D;
+  origin?: PointData;
 }): GeneratedPoints {
   const { radius, segments = 100, origin = { x: 0, y: 0 } } = params;
 
@@ -50,7 +50,7 @@ type GenRectPathParams = {
         bottomLeft?: number;
       };
   segments?: number;
-  origin?: Point2D;
+  origin?: PointData;
 };
 
 // Internal non-memoized implementation
@@ -86,11 +86,11 @@ function genRectPathImpl(params: GenRectPathParams): GeneratedPoints {
   type RectSegment = {
     type: "straight" | "arc";
     length: number;
-    start: Point2D;
+    start: PointData;
     // For straight segments
-    dir?: Point2D;
+    dir?: PointData;
     // For arc segments
-    center?: Point2D;
+    center?: PointData;
     startAngle?: number;
     radius?: number;
   };
@@ -280,8 +280,8 @@ export const genRectPath = memoize(genRectPathImpl, {
 
 // Generate a lightning bolt path
 type GenLightningPathParams = {
-  start: Point2D;
-  end: Point2D;
+  start: PointData;
+  end: PointData;
   displacement?: number; // Maximum perpendicular displacement for zigzag effect
   jaggedness?: number; // Controls how "jagged" the lightning is (0-1)
   seed?: number; // Seed for reproducible randomness
@@ -291,7 +291,7 @@ type GenLightningPathParams = {
 };
 
 // Internal non-memoized implementation
-function genLightningPathImpl(params: GenLightningPathParams): Point2D[] {
+function genLightningPathImpl(params: GenLightningPathParams): PointData[] {
   const { start, end } = params;
   const { displacement = 50, jaggedness = 0.5, seed = Math.random() } = params;
   const {
@@ -342,7 +342,7 @@ function genLightningPathImpl(params: GenLightningPathParams): Point2D[] {
   }
 
   // Apply an envelope so displacements taper near endpoints (no crossing head/tail)
-  const points: Point2D[] = [];
+  const points: PointData[] = [];
   for (let i = 0; i <= numSegments; i++) {
     const t = i / numSegments; // 0..1
     const baseX = start.x + dirX * length * t;
@@ -384,8 +384,8 @@ type GenLightningWithBranchesParams = GenLightningPathParams & {
 };
 
 export type LightningBolt = {
-  main: Point2D[];
-  branches: Point2D[][];
+  main: PointData[];
+  branches: PointData[][];
 };
 
 // Internal non-memoized implementation
@@ -405,7 +405,7 @@ function genLightningWithBranchesImpl(
     seed,
   });
 
-  const branches: Point2D[][] = [];
+  const branches: PointData[][] = [];
 
   // Simple seeded random for branches
   let seedValue = seed * 1.5;
@@ -430,7 +430,7 @@ function genLightningWithBranchesImpl(
 
       // Branch goes sideways and forward
       const angle = seededRandom() > 0.5 ? Math.PI / 3 : -Math.PI / 3;
-      const branchEnd: Point2D = {
+      const branchEnd: PointData = {
         x:
           branchStart.x +
           (dx * Math.cos(angle) - dy * Math.sin(angle)) * branchLength * 5,

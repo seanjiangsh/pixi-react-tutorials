@@ -1,10 +1,6 @@
 export const gridBoardControls = {
-  tiltEnabled: {
-    value: true,
-    label: "Enable Tilt",
-  },
   tilt: {
-    value: 0.5,
+    value: 0,
     min: 0,
     max: 2,
     step: 0.01,
@@ -23,6 +19,44 @@ export const gridBoardControls = {
     max: 10,
     step: 0.1,
     label: "Stroke Width",
+  },
+  shiftX: {
+    value: 0,
+    min: -500,
+    max: 500,
+    step: 1,
+    label: "Shift X",
+  },
+  shiftY: {
+    value: 0,
+    min: -500,
+    max: 500,
+    step: 1,
+    label: "Shift Y",
+  },
+  scaleX: {
+    value: 1,
+    min: 0.1,
+    max: 3,
+    step: 0.01,
+    label: "Scale X",
+  },
+  scaleY: {
+    value: 1,
+    min: 0.1,
+    max: 3,
+    step: 0.01,
+    label: "Scale Y",
+  },
+  scaleAnchorX: {
+    value: "left" as "left" | "right",
+    options: ["left", "right"],
+    label: "Scale Anchor X",
+  },
+  scaleAnchorY: {
+    value: "bottom" as "top" | "bottom",
+    options: ["top", "bottom"],
+    label: "Scale Anchor Y",
   },
 };
 

@@ -15,7 +15,7 @@ export default function SVGParser({ isPixi }: SceneProps) {
 
   const { showLabels, minimal } = useControls("SVG Parser", {
     showLabels: false,
-    minimal: false,
+    minimal: true,
   });
 
   // Set canvas pointer-events to auto on mount
