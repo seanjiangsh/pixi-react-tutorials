@@ -1,5 +1,5 @@
 import { useMemo, useCallback, memo } from "react";
-import { Container, Text, TextStyle } from "pixi.js";
+import { Container, Text, TextStyle, PointData } from "pixi.js";
 import { extend } from "@pixi/react";
 
 import { SVGPathData } from "src/utils/graphics/svgParser";
@@ -8,6 +8,7 @@ import {
   createPerspectiveTransformer,
   calcTransform,
   PerspectiveConfig,
+  ScaleConfig,
 } from "src/utils/graphics/perspective";
 import { GridCellGfx } from "./GridCellGfx";
 import { GridCellShadowGfx } from "./GridCellShadowGfx";
@@ -24,9 +25,8 @@ interface GridCellProps {
   tilt: number;
   pivot: number;
   strokeWidth: number;
-  shift: { x: number; y: number };
-  scale: { x: number; y: number };
-  scaleAnchor: { x: "left" | "right"; y: "top" | "bottom" };
+  shift: PointData;
+  scale?: ScaleConfig;
   shadowType: "inner" | "outer";
   shadowGradientType: "linear" | "concentric";
   shadowLineCount: number;
@@ -43,7 +43,7 @@ interface GridCellProps {
 export function GridCell(props: GridCellProps) {
   const { pathData, index, boardWidth, boardHeight } = props;
   const { isHovered, isSelected } = props;
-  const { tilt, pivot, strokeWidth, shift, scale, scaleAnchor } = props;
+  const { tilt, pivot, strokeWidth, shift, scale } = props;
   const {
     shadowType,
     shadowGradientType,
@@ -70,9 +70,8 @@ export function GridCell(props: GridCellProps) {
   );
 
   const transformPoint = useMemo(
-    () =>
-      createPerspectiveTransformer(perspectiveCfg, shift, scale, scaleAnchor),
-    [perspectiveCfg, shift, scale, scaleAnchor]
+    () => createPerspectiveTransformer(perspectiveCfg, shift, scale),
+    [perspectiveCfg, shift, scale]
   );
 
   // Use the precalculated center from pathData, or fallback to bounds center

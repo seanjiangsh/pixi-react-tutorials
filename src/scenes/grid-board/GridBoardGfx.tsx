@@ -69,15 +69,14 @@ export function GridBoardGfx() {
 
   const shift = useMemo(() => ({ x: shiftX, y: shiftY }), [shiftX, shiftY]);
   const boardTransformScale = useMemo(
-    () => ({ x: scaleX, y: scaleY }),
-    [scaleX, scaleY]
-  );
-  const scaleAnchor = useMemo(
     () => ({
-      x: scaleAnchorX as "left" | "right",
-      y: scaleAnchorY as "top" | "bottom",
+      point: { x: scaleX, y: scaleY },
+      anchor: {
+        x: scaleAnchorX as "left" | "right",
+        y: scaleAnchorY as "top" | "bottom",
+      },
     }),
-    [scaleAnchorX, scaleAnchorY]
+    [scaleX, scaleY, scaleAnchorX, scaleAnchorY]
   );
 
   // Create stable event handler references
@@ -110,7 +109,6 @@ export function GridBoardGfx() {
           strokeWidth={strokeWidth}
           shift={shift}
           scale={boardTransformScale}
-          scaleAnchor={scaleAnchor}
           shadowType={shadowType as "inner" | "outer"}
           shadowGradientType={shadowGradientType as "linear" | "concentric"}
           shadowLineCount={shadowLineCount}

@@ -30,6 +30,16 @@ export interface PerspectiveConfig {
 }
 
 /**
+ * Configuration for scale transformation with anchor point
+ */
+export interface ScaleConfig {
+  /** Scale point for x and y axes */
+  point: PointData;
+  /** Anchor point for scaling origin */
+  anchor: { x: "left" | "right"; y: "top" | "bottom" };
+}
+
+/**
  * Helper function to calculate perspective transformation values
  * @internal
  */
@@ -56,8 +66,7 @@ function calcPerspectiveValues(
  * @param y - Y coordinate to transform
  * @param perspective - Perspective transformation configuration (optional)
  * @param shift - Position shift configuration (optional)
- * @param scale - Scale factor for x and y axes (optional)
- * @param scaleAnchor - Anchor point for scaling (optional)
+ * @param scale - Scale configuration with point and anchor (optional)
  * @returns Transformed point with x and y coordinates
  *
  * @example
@@ -70,8 +79,10 @@ function calcPerspectiveValues(
  *     reference: { width: 800, height: 600 }
  *   },
  *   { x: 10, y: -20 },
- *   { x: 1.5, y: 1.5 },
- *   { x: 'left', y: 'top' }
+ *   {
+ *     point: { x: 1.5, y: 1.5 },
+ *     anchor: { x: 'left', y: 'top' }
+ *   }
  * );
  * ```
  */
@@ -80,8 +91,7 @@ export function applyPerspectiveTransform(
   y: number,
   perspective?: PerspectiveConfig,
   shift?: PointData,
-  scale?: PointData,
-  scaleAnchor?: { x: "left" | "right"; y: "top" | "bottom" }
+  scale?: ScaleConfig
 ): PointData {
   let transformedX = x;
   let transformedY = y;
@@ -110,16 +120,16 @@ export function applyPerspectiveTransform(
     const { reference } = perspective;
 
     // Calculate anchor positions
-    const anchorX = scaleAnchor?.x === "right" ? reference.width : 0;
-    const anchorY = scaleAnchor?.y === "bottom" ? reference.height : 0;
+    const anchorX = scale.anchor.x === "right" ? reference.width : 0;
+    const anchorY = scale.anchor.y === "bottom" ? reference.height : 0;
 
     // Apply scale relative to anchor point
-    transformedX = anchorX + (transformedX - anchorX) * scale.x;
-    transformedY = anchorY + (transformedY - anchorY) * scale.y;
+    transformedX = anchorX + (transformedX - anchorX) * scale.point.x;
+    transformedY = anchorY + (transformedY - anchorY) * scale.point.y;
   } else if (scale) {
     // If no perspective config, apply scale from origin
-    transformedX *= scale.x;
-    transformedY *= scale.y;
+    transformedX *= scale.point.x;
+    transformedY *= scale.point.y;
   }
 
   // Apply position shift if provided
@@ -137,8 +147,7 @@ export function applyPerspectiveTransform(
  *
  * @param perspective - Perspective transformation configuration (optional)
  * @param shift - Position shift configuration (optional)
- * @param scale - Scale factor for x and y axes (optional)
- * @param scaleAnchor - Anchor point for scaling (optional)
+ * @param scale - Scale configuration with point and anchor (optional)
  * @returns Function that transforms a point using the preset configuration
  *
  * @example
@@ -146,8 +155,10 @@ export function applyPerspectiveTransform(
  * const transformer = createPerspectiveTransformer(
  *   { tilt: 0.5, pivot: 0.8, reference: { width: 800, height: 600 } },
  *   { x: 10, y: -20 },
- *   { x: 1.5, y: 1.5 },
- *   { x: 'left', y: 'top' }
+ *   {
+ *     point: { x: 1.5, y: 1.5 },
+ *     anchor: { x: 'left', y: 'top' }
+ *   }
  * );
  *
  * const point1 = transformer(100, 200);
@@ -157,11 +168,10 @@ export function applyPerspectiveTransform(
 export function createPerspectiveTransformer(
   perspective?: PerspectiveConfig,
   shift?: PointData,
-  scale?: PointData,
-  scaleAnchor?: { x: "left" | "right"; y: "top" | "bottom" }
+  scale?: ScaleConfig
 ): (x: number, y: number) => PointData {
   return (x: number, y: number) =>
-    applyPerspectiveTransform(x, y, perspective, shift, scale, scaleAnchor);
+    applyPerspectiveTransform(x, y, perspective, shift, scale);
 }
 
 /**
