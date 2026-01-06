@@ -14,9 +14,9 @@ import useSceneSize from "src/utils/hooks/useSceneSize";
 
 extend({ Container, Graphics });
 
-// const { dimensions, paths } = DATA_ROULETTE_GRID_BOARD;
+const { dimensions, paths } = DATA_ROULETTE_GRID_BOARD;
 // const { dimensions, paths } = DATA_SICBO_MOBILE_BOARD;
-const { dimensions, paths } = DATA_SICBO_MOBILE_BOARD_BACKGROUND;
+// const { dimensions, paths } = DATA_SICBO_MOBILE_BOARD_BACKGROUND;
 
 const { width: boardWidth, height: boardHeight } = dimensions;
 

@@ -96,13 +96,22 @@ export function applyPerspectiveTransform(
   let transformedX = x;
   let transformedY = y;
 
+  // Apply position shift if provided
+  if (shift) {
+    transformedX += shift.x;
+    transformedY += shift.y;
+  }
+
   // Apply perspective transformation if provided and tilt is non-zero
   if (perspective && perspective.tilt !== 0) {
-    const { skewBase, scaleY } = calcPerspectiveValues(x, perspective);
+    const { skewBase, scaleY } = calcPerspectiveValues(
+      transformedX,
+      perspective
+    );
 
     // Calculate pivot point position
     const pivotY = perspective.reference.height * perspective.pivot;
-    const yFromPivot = y - pivotY;
+    const yFromPivot = transformedY - pivotY;
 
     // Apply perspective transformations
     // Negative sign on skewAmount creates the "/ | \" effect:
@@ -111,7 +120,7 @@ export function applyPerspectiveTransform(
     const skewAmount = -skewBase;
 
     // Apply transformations relative to pivot
-    transformedX = x - yFromPivot * skewAmount;
+    transformedX = transformedX - yFromPivot * skewAmount;
     transformedY = pivotY + yFromPivot * scaleY;
   }
 
@@ -130,12 +139,6 @@ export function applyPerspectiveTransform(
     // If no perspective config, apply scale from origin
     transformedX *= scale.point.x;
     transformedY *= scale.point.y;
-  }
-
-  // Apply position shift if provided
-  if (shift) {
-    transformedX += shift.x;
-    transformedY += shift.y;
   }
 
   return { x: transformedX, y: transformedY };
