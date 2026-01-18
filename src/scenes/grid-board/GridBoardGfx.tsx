@@ -14,9 +14,9 @@ import useSceneSize from "src/utils/hooks/useSceneSize";
 
 extend({ Container, Graphics });
 
-// const { dimensions, paths } = DATA_ROULETTE_GRID_BOARD;
+const { dimensions, paths } = DATA_ROULETTE_GRID_BOARD;
 // const { dimensions, paths } = DATA_SICBO_MOBILE_BOARD;
-const { dimensions, paths } = DATA_SICBO_MOBILE_BOARD_BACKGROUND;
+// const { dimensions, paths } = DATA_SICBO_MOBILE_BOARD_BACKGROUND;
 
 const { width: boardWidth, height: boardHeight } = dimensions;
 
@@ -53,16 +53,16 @@ export function GridBoardGfx() {
 
   const scaleValue = useMemo(
     () => ({ x: boardScale, y: boardScale }),
-    [boardScale]
+    [boardScale],
   );
 
   const xMargin = useMemo(
     () => (width - boardWidth * boardScale) / 2,
-    [width, boardScale]
+    [width, boardScale],
   );
   const yMargin = useMemo(
     () => (height - boardHeight * boardScale) / 2,
-    [height, boardScale]
+    [height, boardScale],
   );
 
   const pivotY = useMemo(() => boardHeight * pivot, [pivot]);
@@ -76,7 +76,7 @@ export function GridBoardGfx() {
         y: scaleAnchorY as "top" | "bottom",
       },
     }),
-    [scaleX, scaleY, scaleAnchorX, scaleAnchorY]
+    [scaleX, scaleY, scaleAnchorX, scaleAnchorY],
   );
 
   // Create stable event handler references

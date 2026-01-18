@@ -2,7 +2,7 @@ export const gridBoardControls = {
   tilt: {
     value: 0,
     min: 0,
-    max: 2,
+    max: 1,
     step: 0.01,
     label: "Tilt Intensity",
   },
