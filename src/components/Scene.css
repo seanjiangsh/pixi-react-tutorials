@@ -1,0 +1,34 @@
+.scene {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.scene > canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
+}
+
+.scene-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 50;
+}
+
+#stats {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+#stats canvas {
+  width: max(100px, 10vw, 10vh);
+  height: max(60px, 6vh, 6vw);
+  user-select: none;
+}

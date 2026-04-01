@@ -1,0 +1,467 @@
+import { type GeneratedPoints } from "src/utils/graphics/misc";
+import { genPointsByEquation } from "src/utils/graphics/misc";
+import { memoize } from "./memoize";
+import { PointData } from "pixi.js";
+
+// Utility functions for path calculations
+
+// Internal non-memoized implementation
+function genCirclePathImpl(params: {
+  radius: number;
+  segments?: number;
+  origin?: PointData;
+}): GeneratedPoints {
+  const { radius, segments = 100, origin = { x: 0, y: 0 } } = params;
+
+  return genPointsByEquation({
+    origin,
+    equation: (t: number) => ({
+      x: radius * Math.cos(t),
+      y: radius * Math.sin(t),
+    }),
+    tStart: 0,
+    tEnd: Math.PI * 2,
+    segments,
+    includeTangents: true,
+  });
+}
+
+/**
+ * Generate a circular path with memoization
+ * Cached based on radius, segments, and origin
+ * Uses precision=1 for animations
+ */
+export const genCirclePath = memoize(genCirclePathImpl, {
+  maxSize: 50,
+  maxAge: 60000,
+  precision: 1,
+});
+
+// Generate a rectangle path with optional individual corner radius
+type GenRectPathParams = {
+  width: number;
+  height: number;
+  radius?:
+    | number
+    | {
+        topLeft?: number;
+        topRight?: number;
+        bottomRight?: number;
+        bottomLeft?: number;
+      };
+  segments?: number;
+  origin?: PointData;
+};
+
+// Internal non-memoized implementation
+function genRectPathImpl(params: GenRectPathParams): GeneratedPoints {
+  const {
+    width,
+    height,
+    radius: radiusParam = 0,
+    segments = 200,
+    origin = { x: 0, y: 0 },
+  } = params;
+
+  // Normalize radius to individual corners
+  const cornerRadius =
+    typeof radiusParam === "number"
+      ? {
+          topLeft: radiusParam,
+          topRight: radiusParam,
+          bottomRight: radiusParam,
+          bottomLeft: radiusParam,
+        }
+      : {
+          topLeft: radiusParam.topLeft ?? 0,
+          topRight: radiusParam.topRight ?? 0,
+          bottomRight: radiusParam.bottomRight ?? 0,
+          bottomLeft: radiusParam.bottomLeft ?? 0,
+        };
+
+  const halfWidth = width / 2;
+  const halfHeight = height / 2;
+
+  // Helper type for rectangle segments (straight or arc)
+  type RectSegment = {
+    type: "straight" | "arc";
+    length: number;
+    start: PointData;
+    // For straight segments
+    dir?: PointData;
+    // For arc segments
+    center?: PointData;
+    startAngle?: number;
+    radius?: number;
+  };
+
+  // Build segments clockwise starting from top-left corner
+  const rectSegments: RectSegment[] = [];
+
+  // Starting point: left side of top edge (after top-left corner)
+  let currentX = -halfWidth + cornerRadius.topLeft;
+  let currentY = -halfHeight;
+
+  // Top edge: left to right
+  const topStraightLength =
+    width - cornerRadius.topLeft - cornerRadius.topRight;
+  if (topStraightLength > 0) {
+    rectSegments.push({
+      type: "straight",
+      length: topStraightLength,
+      start: { x: currentX, y: currentY },
+      dir: { x: 1, y: 0 },
+    });
+    currentX = halfWidth - cornerRadius.topRight;
+  }
+
+  // Top-right corner arc
+  if (cornerRadius.topRight > 0) {
+    rectSegments.push({
+      type: "arc",
+      length: (Math.PI / 2) * cornerRadius.topRight,
+      start: { x: currentX, y: currentY },
+      center: {
+        x: halfWidth - cornerRadius.topRight,
+        y: -halfHeight + cornerRadius.topRight,
+      },
+      startAngle: (3 * Math.PI) / 2,
+      radius: cornerRadius.topRight,
+    });
+    currentX = halfWidth;
+    currentY = -halfHeight + cornerRadius.topRight;
+  }
+
+  // Right edge: top to bottom
+  const rightStraightLength =
+    height - cornerRadius.topRight - cornerRadius.bottomRight;
+  if (rightStraightLength > 0) {
+    rectSegments.push({
+      type: "straight",
+      length: rightStraightLength,
+      start: { x: currentX, y: currentY },
+      dir: { x: 0, y: 1 },
+    });
+    currentY = halfHeight - cornerRadius.bottomRight;
+  }
+
+  // Bottom-right corner arc
+  if (cornerRadius.bottomRight > 0) {
+    rectSegments.push({
+      type: "arc",
+      length: (Math.PI / 2) * cornerRadius.bottomRight,
+      start: { x: currentX, y: currentY },
+      center: {
+        x: halfWidth - cornerRadius.bottomRight,
+        y: halfHeight - cornerRadius.bottomRight,
+      },
+      startAngle: 0,
+      radius: cornerRadius.bottomRight,
+    });
+    currentX = halfWidth - cornerRadius.bottomRight;
+    currentY = halfHeight;
+  }
+
+  // Bottom edge: right to left
+  const bottomStraightLength =
+    width - cornerRadius.bottomRight - cornerRadius.bottomLeft;
+  if (bottomStraightLength > 0) {
+    rectSegments.push({
+      type: "straight",
+      length: bottomStraightLength,
+      start: { x: currentX, y: currentY },
+      dir: { x: -1, y: 0 },
+    });
+    currentX = -halfWidth + cornerRadius.bottomLeft;
+  }
+
+  // Bottom-left corner arc
+  if (cornerRadius.bottomLeft > 0) {
+    rectSegments.push({
+      type: "arc",
+      length: (Math.PI / 2) * cornerRadius.bottomLeft,
+      start: { x: currentX, y: currentY },
+      center: {
+        x: -halfWidth + cornerRadius.bottomLeft,
+        y: halfHeight - cornerRadius.bottomLeft,
+      },
+      startAngle: Math.PI / 2,
+      radius: cornerRadius.bottomLeft,
+    });
+    currentX = -halfWidth;
+    currentY = halfHeight - cornerRadius.bottomLeft;
+  }
+
+  // Left edge: bottom to top
+  const leftStraightLength =
+    height - cornerRadius.bottomLeft - cornerRadius.topLeft;
+  if (leftStraightLength > 0) {
+    rectSegments.push({
+      type: "straight",
+      length: leftStraightLength,
+      start: { x: currentX, y: currentY },
+      dir: { x: 0, y: -1 },
+    });
+    currentY = -halfHeight + cornerRadius.topLeft;
+  }
+
+  // Top-left corner arc (completes the loop)
+  if (cornerRadius.topLeft > 0) {
+    rectSegments.push({
+      type: "arc",
+      length: (Math.PI / 2) * cornerRadius.topLeft,
+      start: { x: currentX, y: currentY },
+      center: {
+        x: -halfWidth + cornerRadius.topLeft,
+        y: -halfHeight + cornerRadius.topLeft,
+      },
+      startAngle: Math.PI,
+      radius: cornerRadius.topLeft,
+    });
+  }
+
+  // Calculate cumulative lengths for each segment
+  const cumulativeLengths = rectSegments.reduce(
+    (acc, seg) => [...acc, acc[acc.length - 1] + seg.length],
+    [0]
+  );
+  const totalLength = cumulativeLengths[cumulativeLengths.length - 1];
+
+  return genPointsByEquation({
+    origin,
+    equation: (t: number) => {
+      t = Math.max(0, Math.min(t, totalLength - 0.0001));
+
+      // Find which segment we're on
+      let segmentIndex = 0;
+      for (let i = 0; i < rectSegments.length; i++) {
+        if (t < cumulativeLengths[i + 1]) {
+          segmentIndex = i;
+          break;
+        }
+      }
+
+      const segmentT = t - cumulativeLengths[segmentIndex];
+      const segment = rectSegments[segmentIndex];
+
+      if (segment.type === "straight") {
+        // Straight segment
+        return {
+          x: segment.start.x + segment.dir!.x * segmentT,
+          y: segment.start.y + segment.dir!.y * segmentT,
+        };
+      } else {
+        // Arc segment
+        const arcProgress = segmentT / segment.length;
+        const angle = segment.startAngle! + arcProgress * (Math.PI / 2);
+        return {
+          x: segment.center!.x + segment.radius! * Math.cos(angle),
+          y: segment.center!.y + segment.radius! * Math.sin(angle),
+        };
+      }
+    },
+    tStart: 0,
+    tEnd: totalLength,
+    segments,
+    includeTangents: true,
+  });
+}
+
+/**
+ * Generate a rectangle path with optional rounded corners and memoization
+ * Cached based on width, height, radius, segments, and origin
+ * Uses precision=1 for animations
+ */
+export const genRectPath = memoize(genRectPathImpl, {
+  maxSize: 50,
+  maxAge: 60000,
+  precision: 1,
+});
+
+// Generate a lightning bolt path
+type GenLightningPathParams = {
+  start: PointData;
+  end: PointData;
+  displacement?: number; // Maximum perpendicular displacement for zigzag effect
+  jaggedness?: number; // Controls how "jagged" the lightning is (0-1)
+  seed?: number; // Seed for reproducible randomness
+  segmentDensity?: number; // Points per unit length (higher = more detail)
+  envelopeShape?: number; // Envelope curve power (1 = sine, >1 = sharper taper)
+  smoothingIterations?: number; // Number of smoothing passes (overrides jaggedness)
+};
+
+// Internal non-memoized implementation
+function genLightningPathImpl(params: GenLightningPathParams): PointData[] {
+  const { start, end } = params;
+  const { displacement = 50, jaggedness = 0.5, seed = Math.random() } = params;
+  const {
+    segmentDensity = 12,
+    envelopeShape = 1,
+    smoothingIterations,
+  } = params;
+
+  // Seeded random generator (linear congruential)
+  let seedValue = Math.floor(seed as number) || 1;
+  const seededRandom = () => {
+    seedValue = (seedValue * 9301 + 49297) % 233280;
+    return seedValue / 233280;
+  };
+
+  // Line vector and perpendicular
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const length = Math.sqrt(dx * dx + dy * dy) || 1;
+  const dirX = dx / length;
+  const dirY = dy / length;
+  const perpX = -dirY;
+  const perpY = dirX;
+
+  // Determine number of sample segments based on density and length
+  const rawSegments = Math.max(4, Math.round(length / segmentDensity));
+  const numSegments = Math.min(200, rawSegments);
+
+  // Generate random peak heights for each sample point (endpoints zero)
+  const heights: number[] = new Array(numSegments + 1).fill(0);
+  for (let i = 1; i < numSegments; i++) {
+    // random in -1..1
+    heights[i] = (seededRandom() * 2 - 1) * displacement;
+  }
+
+  // Smooth heights: use explicit iterations if provided, else derive from jaggedness
+  const smoothPasses =
+    smoothingIterations !== undefined
+      ? smoothingIterations
+      : Math.max(0, Math.round((1 - jaggedness) * 5));
+
+  for (let iter = 0; iter < smoothPasses; iter++) {
+    const temp = heights.slice();
+    for (let i = 1; i < numSegments; i++) {
+      temp[i] = (heights[i - 1] + heights[i] + heights[i + 1]) / 3;
+    }
+    for (let i = 1; i < numSegments; i++) heights[i] = temp[i];
+  }
+
+  // Apply an envelope so displacements taper near endpoints (no crossing head/tail)
+  const points: PointData[] = [];
+  for (let i = 0; i <= numSegments; i++) {
+    const t = i / numSegments; // 0..1
+    const baseX = start.x + dirX * length * t;
+    const baseY = start.y + dirY * length * t;
+
+    // Envelope: shaped by envelopeShape parameter
+    // envelopeShape = 1: sine wave (smooth)
+    // envelopeShape > 1: sharper peak in middle
+    // envelopeShape < 1: flatter curve
+    const envelope = Math.pow(Math.sin(Math.PI * t), envelopeShape);
+
+    const offset = heights[i] * envelope;
+
+    const px = baseX + perpX * offset;
+    const py = baseY + perpY * offset;
+
+    points.push({ x: px, y: py });
+  }
+
+  return points;
+}
+
+/**
+ * Generate a lightning bolt path with memoization
+ * Cached based on all parameters including seed for reproducible results
+ * Note: If seed is random, each call will be unique and won't benefit from cache
+ * Uses precision=1 for animations
+ */
+export const genLightningPath = memoize(genLightningPathImpl, {
+  maxSize: 30, // Lightning paths are larger, keep fewer cached
+  maxAge: 30000, // Shorter cache time for dynamic effects
+  precision: 1,
+});
+
+// Generate lightning with branches
+type GenLightningWithBranchesParams = GenLightningPathParams & {
+  branchProbability?: number; // Probability of branching at each point (0-1)
+  branchLength?: number; // Relative length of branches (0-1)
+};
+
+export type LightningBolt = {
+  main: PointData[];
+  branches: PointData[][];
+};
+
+// Internal non-memoized implementation
+function genLightningWithBranchesImpl(
+  params: GenLightningWithBranchesParams
+): LightningBolt {
+  const { start, end, displacement = 50 } = params;
+  const { branchProbability = 0.3, branchLength = 0.5 } = params;
+  const { jaggedness = 0.5, seed = Math.random() } = params;
+
+  // Generate main bolt
+  const mainBolt = genLightningPath({
+    start,
+    end,
+    displacement,
+    jaggedness,
+    seed,
+  });
+
+  const branches: PointData[][] = [];
+
+  // Simple seeded random for branches
+  let seedValue = seed * 1.5;
+  const seededRandom = () => {
+    seedValue = (seedValue * 9301 + 49297) % 233280;
+    return seedValue / 233280;
+  };
+
+  // Generate branches from points along the main bolt
+  // Skip first and last few points
+  const startIdx = Math.floor(mainBolt.length * 0.2);
+  const endIdx = Math.floor(mainBolt.length * 0.8);
+
+  for (let i = startIdx; i < endIdx; i++) {
+    if (seededRandom() < branchProbability) {
+      const branchStart = mainBolt[i];
+
+      // Calculate branch direction (perpendicular + forward)
+      const nextPoint = mainBolt[Math.min(i + 1, mainBolt.length - 1)];
+      const dx = nextPoint.x - branchStart.x;
+      const dy = nextPoint.y - branchStart.y;
+
+      // Branch goes sideways and forward
+      const angle = seededRandom() > 0.5 ? Math.PI / 3 : -Math.PI / 3;
+      const branchEnd: PointData = {
+        x:
+          branchStart.x +
+          (dx * Math.cos(angle) - dy * Math.sin(angle)) * branchLength * 5,
+        y:
+          branchStart.y +
+          (dx * Math.sin(angle) + dy * Math.cos(angle)) * branchLength * 5,
+      };
+
+      const branch = genLightningPath({
+        start: branchStart,
+        end: branchEnd,
+        displacement: displacement * branchLength * 0.7,
+        jaggedness: jaggedness * 1.2,
+        seed: seedValue + i,
+      });
+
+      branches.push(branch);
+    }
+  }
+
+  return { main: mainBolt, branches };
+}
+
+/**
+ * Generate lightning with branches and memoization
+ * Cached based on all parameters including seed
+ * Use a consistent seed value to benefit from caching
+ * Uses precision=1 for animations
+ */
+export const genLightningWithBranches = memoize(genLightningWithBranchesImpl, {
+  maxSize: 20, // Complex structures, keep fewer cached
+  maxAge: 30000,
+  precision: 1,
+});

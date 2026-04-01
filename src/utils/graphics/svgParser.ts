@@ -1,0 +1,444 @@
+import { SVGPathData as SVGPathDataParser } from "svg-pathdata";
+
+export interface SVGCommand {
+  type: number;
+  coords: Record<string, number>;
+  // For rounded rectangles, store the original rect params
+  isRoundedRect?: boolean;
+  rectParams?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    radius: number;
+  };
+}
+
+export interface SVGPathData {
+  path?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  isClosed?: boolean;
+  bounds?: { x: number; y: number; width: number; height: number };
+  center?: { x: number; y: number };
+  commands?: SVGCommand[];
+}
+
+export interface SVGDimensions {
+  width: number;
+  height: number;
+}
+
+export interface PathGroup {
+  closedPaths: SVGPathData[];
+  openPaths: SVGPathData[];
+}
+
+export interface ParsedSVG {
+  paths: SVGPathData[];
+  pathGroups?: PathGroup;
+  dimensions: SVGDimensions;
+}
+
+/**
+ * Checks if a path is closed and calculates its bounds
+ */
+function analyzePathData(pathString: string): {
+  isClosed: boolean;
+  bounds: { x: number; y: number; width: number; height: number };
+  center?: { x: number; y: number };
+  commands: SVGCommand[];
+} {
+  // console.log("🔍 Analyzing path:", pathString.substring(0, 100));
+
+  const parser = new SVGPathDataParser(pathString);
+  const commands = parser.toAbs().commands;
+
+  let isClosed = false;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let currentX = 0;
+  let currentY = 0;
+
+  const svgCommands: SVGCommand[] = [];
+
+  commands.forEach((command) => {
+    if (command.type === SVGPathDataParser.CLOSE_PATH) {
+      isClosed = true;
+      // console.log("✅ Found CLOSE_PATH command");
+    }
+
+    // Extract coordinates for this command
+    const coords: Record<string, number> = {};
+
+    // Handle main coordinates
+    if ("x" in command && "y" in command) {
+      coords.x = command.x;
+      coords.y = command.y;
+      currentX = command.x;
+      currentY = command.y;
+      minX = Math.min(minX, command.x);
+      minY = Math.min(minY, command.y);
+      maxX = Math.max(maxX, command.x);
+      maxY = Math.max(maxY, command.y);
+    } else if ("x" in command) {
+      // HORIZ_LINE_TO only has x
+      coords.x = command.x;
+      currentX = command.x;
+      minX = Math.min(minX, command.x);
+      maxX = Math.max(maxX, command.x);
+      // Use current Y for bounds
+      minY = Math.min(minY, currentY);
+      maxY = Math.max(maxY, currentY);
+    } else if ("y" in command) {
+      // VERT_LINE_TO only has y
+      coords.y = command.y;
+      currentY = command.y;
+      minY = Math.min(minY, command.y);
+      maxY = Math.max(maxY, command.y);
+      // Use current X for bounds
+      minX = Math.min(minX, currentX);
+      maxX = Math.max(maxX, currentX);
+    }
+
+    // Handle control points for curves
+    if ("x1" in command && "y1" in command) {
+      coords.x1 = command.x1;
+      coords.y1 = command.y1;
+      minX = Math.min(minX, command.x1);
+      minY = Math.min(minY, command.y1);
+      maxX = Math.max(maxX, command.x1);
+      maxY = Math.max(maxY, command.y1);
+    }
+    if ("x2" in command && "y2" in command) {
+      coords.x2 = command.x2;
+      coords.y2 = command.y2;
+      minX = Math.min(minX, command.x2);
+      minY = Math.min(minY, command.y2);
+      maxX = Math.max(maxX, command.x2);
+      maxY = Math.max(maxY, command.y2);
+    }
+
+    // Handle arc parameters
+    if ("rX" in command) coords.rX = command.rX;
+    if ("rY" in command) coords.rY = command.rY;
+    if ("xRot" in command) coords.xRot = command.xRot;
+    if ("lArcFlag" in command) coords.lArcFlag = command.lArcFlag;
+    if ("sweepFlag" in command) coords.sweepFlag = command.sweepFlag;
+
+    svgCommands.push({
+      type: command.type,
+      coords,
+    });
+  });
+
+  // console.log(
+  //   `Path analysis result: isClosed=${isClosed}, commands count=${commands.length}`
+  // );
+
+  const bounds = {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+
+  // Calculate center point for closed paths
+  const center = isClosed
+    ? {
+        x: minX + (maxX - minX) / 2,
+        y: minY + (maxY - minY) / 2,
+      }
+    : undefined;
+
+  return {
+    isClosed,
+    bounds,
+    center,
+    commands: svgCommands,
+  };
+}
+
+/**
+ * Parses an SVG string and extracts path data and dimensions
+ * @param svgText - The SVG content as a string
+ * @param minimal - If true, excludes the SVG path string from results (for rendering only). If false (default), includes full path data.
+ */
+export function parseSVG(svgText: string, minimal: boolean = false): ParsedSVG {
+  const parser = new DOMParser();
+  const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
+
+  // Get SVG viewBox dimensions
+  const svgElement = svgDoc.querySelector("svg");
+  const viewBox = svgElement?.getAttribute("viewBox");
+  let dimensions: SVGDimensions = { width: 0, height: 0 };
+
+  if (viewBox) {
+    const [, , width, height] = viewBox.split(/\s+/).map(parseFloat);
+    dimensions = { width, height };
+  }
+
+  // Extract all path and rect elements
+  const paths: SVGPathData[] = [];
+
+  // Get path elements
+  svgDoc.querySelectorAll("path").forEach((pathElement) => {
+    const d = pathElement.getAttribute("d");
+    const stroke = pathElement.getAttribute("stroke") ?? undefined;
+    const strokeWidth = parseFloat(
+      pathElement.getAttribute("stroke-width") ?? "1",
+    );
+    if (d) {
+      const { isClosed, bounds, center, commands } = analyzePathData(d);
+      paths.push({
+        ...(minimal ? {} : { path: d }),
+        ...(minimal ? {} : { stroke, strokeWidth }),
+        isClosed,
+        bounds,
+        center,
+        commands,
+      });
+    }
+  });
+
+  // Get rect elements - for rounded rects, store metadata for PixiJS roundRect
+  svgDoc.querySelectorAll("rect").forEach((rectElement) => {
+    const x = parseFloat(rectElement.getAttribute("x") ?? "0");
+    const y = parseFloat(rectElement.getAttribute("y") ?? "0");
+    const width = parseFloat(rectElement.getAttribute("width") ?? "0");
+    const height = parseFloat(rectElement.getAttribute("height") ?? "0");
+    const rx = parseFloat(rectElement.getAttribute("rx") ?? "0");
+    const ry = parseFloat(rectElement.getAttribute("ry") ?? rx.toString());
+    const transform = rectElement.getAttribute("transform");
+    const stroke = rectElement.getAttribute("stroke") ?? undefined;
+    const strokeWidth = parseFloat(
+      rectElement.getAttribute("stroke-width") ?? "1",
+    );
+
+    // For rounded rectangles, create bezier curve commands for proper perspective rendering
+    if (rx > 0 && ry > 0 && rx === ry && !transform) {
+      const radius = Math.min(rx, width / 2, height / 2);
+      const bounds = { x, y, width, height };
+      const center = {
+        x: x + width / 2,
+        y: y + height / 2,
+      };
+
+      // Magic number for approximating a quarter circle with a cubic bezier curve
+      const kappa = 0.5522847498;
+      const controlDist = radius * kappa;
+
+      // Create commands with bezier curves for rounded corners
+      const commands: SVGCommand[] = [
+        // Start at top-left after radius
+        { type: 2, coords: { x: x + radius, y } }, // MOVE_TO
+
+        // Top edge
+        { type: 16, coords: { x: x + width - radius, y } }, // LINE_TO
+
+        // Top-right corner: bezier curve from (x+width-radius, y) to (x+width, y+radius)
+        {
+          type: 32, // CURVE_TO
+          coords: {
+            x1: x + width - radius + controlDist,
+            y1: y,
+            x2: x + width,
+            y2: y + radius - controlDist,
+            x: x + width,
+            y: y + radius,
+          },
+        },
+
+        // Right edge
+        { type: 16, coords: { x: x + width, y: y + height - radius } },
+
+        // Bottom-right corner: bezier curve from (x+width, y+height-radius) to (x+width-radius, y+height)
+        {
+          type: 32, // CURVE_TO
+          coords: {
+            x1: x + width,
+            y1: y + height - radius + controlDist,
+            x2: x + width - radius + controlDist,
+            y2: y + height,
+            x: x + width - radius,
+            y: y + height,
+          },
+        },
+
+        // Bottom edge
+        { type: 16, coords: { x: x + radius, y: y + height } },
+
+        // Bottom-left corner: bezier curve from (x+radius, y+height) to (x, y+height-radius)
+        {
+          type: 32, // CURVE_TO
+          coords: {
+            x1: x + radius - controlDist,
+            y1: y + height,
+            x2: x,
+            y2: y + height - radius + controlDist,
+            x,
+            y: y + height - radius,
+          },
+        },
+
+        // Left edge
+        { type: 16, coords: { x, y: y + radius } },
+
+        // Top-left corner: bezier curve from (x, y+radius) to (x+radius, y)
+        {
+          type: 32, // CURVE_TO
+          coords: {
+            x1: x,
+            y1: y + radius - controlDist,
+            x2: x + radius - controlDist,
+            y2: y,
+            x: x + radius,
+            y,
+          },
+        },
+
+        // Close path
+        { type: 1, coords: {} },
+      ];
+
+      paths.push({
+        ...(minimal ? {} : { stroke, strokeWidth }),
+        isClosed: true,
+        bounds,
+        center,
+        commands,
+      });
+    } else {
+      // Convert rect to path
+      const rectPath = convertRectToPath(
+        x,
+        y,
+        width,
+        height,
+        rx,
+        ry,
+        transform,
+      );
+      const { isClosed, bounds, center, commands } = analyzePathData(rectPath);
+      paths.push({
+        ...(minimal ? {} : { path: rectPath }),
+        ...(minimal ? {} : { stroke, strokeWidth }),
+        isClosed,
+        bounds,
+        center,
+        commands,
+      });
+    }
+  });
+
+  // Group paths by closed/open status
+  if (minimal) {
+    return { paths, dimensions };
+  }
+
+  const pathGroups: PathGroup = {
+    closedPaths: paths.filter((p) => p.isClosed),
+    openPaths: paths.filter((p) => !p.isClosed),
+  };
+
+  return { paths, pathGroups, dimensions };
+}
+
+/**
+ * Converts a rect element to an SVG path string
+ * Supports rounded corners via rx and ry attributes
+ */
+function convertRectToPath(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  rx: number = 0,
+  ry: number = 0,
+  transform?: string | null,
+): string {
+  // Clamp corner radii to half of width/height
+  rx = Math.min(rx, width / 2);
+  ry = Math.min(ry, height / 2);
+
+  // If no rounded corners, use simple rectangle
+  if (rx === 0 && ry === 0) {
+    let rectPath = `M ${x} ${y} L ${x + width} ${y} L ${x + width} ${
+      y + height
+    } L ${x} ${y + height} Z`;
+
+    // Handle rotation transform
+    if (transform?.includes("rotate")) {
+      const match = transform.match(/rotate\(([^)]+)\)/);
+      if (match) {
+        const [angle, cx, cy] = match[1].split(/\s+/).map(parseFloat);
+        // Handle common rotation angles: 90, -90, 180, 270, etc.
+        if (angle !== 0 && !isNaN(angle) && !isNaN(cx) && !isNaN(cy)) {
+          // Define corners relative to rect origin
+          const corners = [
+            { x: x, y: y },
+            { x: x + width, y: y },
+            { x: x + width, y: y + height },
+            { x: x, y: y + height },
+          ];
+
+          // Apply rotation transformation around (cx, cy)
+          const rad = (angle * Math.PI) / 180;
+          const cos = Math.cos(rad);
+          const sin = Math.sin(rad);
+
+          const rotated = corners.map((point) => {
+            // Translate to origin (relative to rotation center)
+            const dx = point.x - cx;
+            const dy = point.y - cy;
+            // Rotate
+            const rotatedX = dx * cos - dy * sin;
+            const rotatedY = dx * sin + dy * cos;
+            // Translate back
+            return {
+              x: cx + rotatedX,
+              y: cy + rotatedY,
+            };
+          });
+
+          rectPath = `M ${rotated[0].x} ${rotated[0].y} L ${rotated[1].x} ${rotated[1].y} L ${rotated[2].x} ${rotated[2].y} L ${rotated[3].x} ${rotated[3].y} Z`;
+        }
+      }
+    }
+
+    return rectPath;
+  }
+
+  // Generate path with rounded corners using arcs
+  // The arc center and angles will be computed during parsing by analyzePathData
+  const path = [
+    `M ${x + rx} ${y}`,
+    `L ${x + width - rx} ${y}`,
+    `A ${rx} ${ry} 0 0 1 ${x + width} ${y + ry}`,
+    `L ${x + width} ${y + height - ry}`,
+    `A ${rx} ${ry} 0 0 1 ${x + width - rx} ${y + height}`,
+    `L ${x + rx} ${y + height}`,
+    `A ${rx} ${ry} 0 0 1 ${x} ${y + height - ry}`,
+    `L ${x} ${y + ry}`,
+    `A ${rx} ${ry} 0 0 1 ${x + rx} ${y}`,
+    `Z`,
+  ].join(" ");
+
+  return path;
+}
+
+/**
+ * Fetches and parses an SVG file from a URL
+ * @param url - The URL of the SVG file
+ * @param minimal - If true, excludes the SVG path string from results (for rendering only). If false (default), includes full path data.
+ */
+export async function fetchAndParseSVG(
+  url: string,
+  minimal: boolean = false,
+): Promise<ParsedSVG> {
+  const response = await fetch(url);
+  const text = await response.text();
+  return parseSVG(text, minimal);
+}

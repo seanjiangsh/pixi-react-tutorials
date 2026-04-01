@@ -1,0 +1,51 @@
+<svg width="1400" height="500" viewBox="0 0 1400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M30 0.5H100.5V299.5H30C13.7076 299.5 0.5 286.292 0.5 270V30C0.500004 13.7076 13.7076 0.5 30 0.5Z" stroke="black"/>
+<path d="M500.5 299.5V399.5H100.5V299.5H500.5Z" stroke="black"/>
+<path d="M900.5 299.5V399.5H500.5V299.5H900.5Z" stroke="black"/>
+<path d="M1299.5 299.5V399.5H900.5V299.5H1299.5Z" stroke="black"/>
+<path d="M300.5 399.5V499.5H130C113.708 499.5 100.5 486.292 100.5 470V399.5H300.5Z" stroke="black"/>
+<path d="M500.5 399.5V499.5H300.5V399.5H500.5Z" stroke="black"/>
+<path d="M700.5 399.5V499.5H500.5V399.5H700.5Z" stroke="black"/>
+<path d="M900.5 399.5V499.5H700.5V399.5H900.5Z" stroke="black"/>
+<path d="M1100.5 399.5V499.5H900.5V399.5H1100.5Z" stroke="black"/>
+<path d="M1299.5 399.5V470C1299.5 486.292 1286.29 499.5 1270 499.5H1100.5V399.5H1299.5Z" stroke="black"/>
+<path d="M1399.5 199.5V270C1399.5 286.292 1386.29 299.5 1370 299.5H1299.5V199.5H1399.5Z" stroke="black"/>
+<rect x="1299.5" y="99.5" width="100" height="100" stroke="black"/>
+<path d="M1370 0.5C1386.29 0.5 1399.5 13.7076 1399.5 30V99.5H1299.5V0.5H1370Z" stroke="black"/>
+<rect x="100.5" y="0.5" width="100" height="99" stroke="black"/>
+<rect x="100.5" y="99.5" width="100" height="100" stroke="black"/>
+<rect x="100.5" y="199.5" width="100" height="100" stroke="black"/>
+<rect x="200.5" y="0.5" width="100" height="99" stroke="black"/>
+<rect x="200.5" y="99.5" width="100" height="100" stroke="black"/>
+<rect x="200.5" y="199.5" width="100" height="100" stroke="black"/>
+<rect x="300.5" y="0.5" width="100" height="99" stroke="black"/>
+<rect x="300.5" y="99.5" width="100" height="100" stroke="black"/>
+<rect x="300.5" y="199.5" width="100" height="100" stroke="black"/>
+<rect x="400.5" y="0.5" width="100" height="99" stroke="black"/>
+<rect x="400.5" y="99.5" width="100" height="100" stroke="black"/>
+<rect x="400.5" y="199.5" width="100" height="100" stroke="black"/>
+<rect x="500.5" y="0.5" width="100" height="99" stroke="black"/>
+<rect x="500.5" y="99.5" width="100" height="100" stroke="black"/>
+<rect x="500.5" y="199.5" width="100" height="100" stroke="black"/>
+<rect x="600.5" y="0.5" width="100" height="99" stroke="black"/>
+<rect x="600.5" y="99.5" width="100" height="100" stroke="black"/>
+<rect x="600.5" y="199.5" width="100" height="100" stroke="black"/>
+<rect x="700.5" y="0.5" width="100" height="99" stroke="black"/>
+<rect x="700.5" y="99.5" width="100" height="100" stroke="black"/>
+<rect x="700.5" y="199.5" width="100" height="100" stroke="black"/>
+<rect x="800.5" y="0.5" width="100" height="99" stroke="black"/>
+<rect x="800.5" y="99.5" width="100" height="100" stroke="black"/>
+<rect x="800.5" y="199.5" width="100" height="100" stroke="black"/>
+<rect x="900.5" y="0.5" width="100" height="99" stroke="black"/>
+<rect x="900.5" y="99.5" width="100" height="100" stroke="black"/>
+<rect x="900.5" y="199.5" width="100" height="100" stroke="black"/>
+<rect x="1000.5" y="0.5" width="100" height="99" stroke="black"/>
+<rect x="1000.5" y="99.5" width="100" height="100" stroke="black"/>
+<rect x="1000.5" y="199.5" width="100" height="100" stroke="black"/>
+<rect x="1100.5" y="0.5" width="100" height="99" stroke="black"/>
+<rect x="1100.5" y="99.5" width="100" height="100" stroke="black"/>
+<rect x="1100.5" y="199.5" width="100" height="100" stroke="black"/>
+<rect x="1200.5" y="0.5" width="99" height="99" stroke="black"/>
+<rect x="1200.5" y="99.5" width="99" height="100" stroke="black"/>
+<rect x="1200.5" y="199.5" width="99" height="100" stroke="black"/>
+</svg>
